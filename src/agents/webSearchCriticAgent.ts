@@ -102,16 +102,21 @@ export class WebSearchCriticAgent extends AgentBase<WebSearchInput, AccuracyCrit
  private async analyzeClaimAccuracy(claim: string, searchResults: any): Promise<Claim> {
  const analysisPrompt = `Analyze the accuracy of the following claim based on the provided search results:
 
- Claim: "${claim}"
- Search Results: ${JSON.stringify(searchResults.results?.slice(0, 5) || [])}
+Claim: "${claim}"
+Search Results: ${JSON.stringify(searchResults.results?.slice(0, 5) || [])}
 
- Provide a detailed analysis including:
- 1. Whether the claim is verified (true/false)
- 2. Confidence level (0-1)
- 3. Supporting or contradicting evidence
- 4. Source reliability assessment`;
+You MUST respond with ONLY valid JSON in this exact format:
+{
+  "isVerified": true or false,
+  "confidence": 0.0 to 1.0,
+  "evidence": "explanation of supporting or contradicting evidence",
+  "sources": [
+    {"url": "source url", "title": "source title", "snippet": "relevant excerpt"}
+  ]
+}`;
 
- const systemPrompt = 'You are a fact-checking specialist. Analyze claims objectively based on search results and provide accurate assessments.';
+ const systemPrompt = `You are a fact-checking specialist. Analyze claims objectively based on search results.
+IMPORTANT: You must ALWAYS respond with valid JSON only. No explanations or text outside the JSON object.`;
 
  const schema = z.object({
  isVerified: z.boolean(),

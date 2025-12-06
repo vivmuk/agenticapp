@@ -57,7 +57,7 @@ export class ContentGeneratorAgent extends AgentBase<ContentGenerationInput, Con
           definition: validatedResponse.definition,
           linkedinPost: validatedResponse.linkedinPost,
           imagePrompt: validatedResponse.imagePrompt,
-          imageUrl: imageResponse.data[0]?.url,
+          imageUrl: imageResponse.images?.[0]?.url || imageResponse.images?.[0]?.b64_json,
           keyClaims: validatedResponse.keyClaims,
           metadata: {
             cycleNumber: input.cycleNumber,
@@ -151,16 +151,19 @@ Cycle ${input.cycleNumber} of ${input.maxCycles || 3}. Focus on quality and impr
       logger.info('Generating image for content', { prompt: prompt.substring(0, 50) });
 
       const imageRequest = {
-        model: 'venice-sd35',
+        model: 'z-image-turbo',
         prompt: prompt,
-        width: 512,
-        height: 512,
-        steps: 25,
+        width: 1024,
+        height: 1024,
+        steps: 8,
       };
 
       const imageResponse = await this.veniceClient.generateImage(imageRequest);
 
-      logger.info('Image generated successfully', { imageUrl: imageResponse.data[0]?.url });
+      logger.info('Image generated successfully', {
+        hasUrl: !!imageResponse.images?.[0]?.url,
+        hasB64: !!imageResponse.images?.[0]?.b64_json
+      });
 
       return imageResponse;
     } catch (error) {
@@ -169,8 +172,8 @@ Cycle ${input.cycleNumber} of ${input.maxCycles || 3}. Focus on quality and impr
       });
 
       return {
-        data: [{
-          url: 'https://via.placeholder.com/512x512/cccccc/666666?text=Image+Generation+Failed',
+        images: [{
+          url: 'https://via.placeholder.com/1024x1024/cccccc/666666?text=Image+Generation+Failed',
         }],
       };
     }

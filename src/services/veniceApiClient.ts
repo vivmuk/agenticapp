@@ -1,5 +1,6 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 import { z } from 'zod';
+import { zodToJsonSchema } from 'zod-to-json-schema';
 import logger from '../utils/logger';
 
 export interface VeniceAPIConfig {
@@ -36,7 +37,16 @@ export interface VeniceChatRequest {
   top_p?: number;
   tools?: VeniceTool[];
   tool_choice?: 'auto' | 'required';
-  response_format?: { type: 'json_object' };
+  response_format?: {
+    type: 'json_object';
+  } | {
+    type: 'json_schema';
+    json_schema: {
+      name: string;
+      strict: boolean;
+      schema: Record<string, any>;
+    };
+  };
   // Venice-specific web search parameters
   venice_parameters?: {
     enable_web_search?: 'on' | 'off' | 'auto';
@@ -71,21 +81,25 @@ export interface VeniceChatResponse {
 }
 
 export interface VeniceImageRequest {
-  model: string;
+  model?: string;
   prompt: string;
   width?: number;
   height?: number;
   steps?: number;
+  cfg_scale?: number;
+  negative_prompt?: string;
+  style_preset?: string;
+  safe_mode?: boolean;
+  hide_watermark?: boolean;
 }
 
 export interface VeniceImageResponse {
-  id: string;
-  object: string;
-  created: number;
-  data: Array<{
-    url: string;
-    revised_prompt?: string;
+  images: Array<{
+    b64_json?: string;
+    url?: string;
   }>;
+  id?: string;
+  request_id?: string;
 }
 
 export class VeniceAPIClient {
@@ -100,7 +114,7 @@ export class VeniceAPIClient {
         'Authorization': `Bearer ${config.apiKey}`,
         'Content-Type': 'application/json',
       },
-      timeout: 60000,
+      timeout: 120000, // 2 minutes for longer operations
     });
   }
 
@@ -165,12 +179,33 @@ export class VeniceAPIClient {
     }
     messages.push({ role: 'user', content: prompt });
 
+    // Convert Zod schema to JSON Schema format for Venice API
+    const jsonSchema = zodToJsonSchema(schema, {
+      $refStrategy: 'none',
+      target: 'openApi3'
+    });
+
+    // Ensure additionalProperties is false at all levels (Venice requirement)
+    const veniceSchema = this.ensureAdditionalPropertiesFalse(jsonSchema);
+
     const request: VeniceChatRequest = {
       model: this.config.model,
       messages,
-      response_format: { type: 'json_object' },
+      response_format: {
+        type: 'json_schema',
+        json_schema: {
+          name: 'structured_response',
+          strict: true,
+          schema: veniceSchema as Record<string, any>,
+        },
+      },
       tools,
     };
+
+    logger.debug('Sending structured request', {
+      model: this.config.model,
+      schemaProperties: Object.keys((veniceSchema as any).properties || {})
+    });
 
     const response = await this.generateChatCompletion(request);
     const content = response.choices[0]?.message?.content;
@@ -183,27 +218,77 @@ export class VeniceAPIClient {
       return schema.parse(parsed);
     } catch (error) {
       logger.error('Failed to parse or validate structured response', {
-        content,
+        content: content.substring(0, 500),
         error: (error as Error).message,
       });
       throw new Error(`Invalid structured response: ${(error as Error).message}`);
     }
   }
 
+  private ensureAdditionalPropertiesFalse(schema: any): any {
+    if (typeof schema !== 'object' || schema === null) {
+      return schema;
+    }
+
+    const result = { ...schema };
+
+    // Remove $schema as Venice doesn't need it
+    delete result.$schema;
+
+    if (result.type === 'object') {
+      result.additionalProperties = false;
+    }
+
+    if (result.properties) {
+      result.properties = Object.fromEntries(
+        Object.entries(result.properties).map(([key, value]) => [
+          key,
+          this.ensureAdditionalPropertiesFalse(value),
+        ])
+      );
+    }
+
+    if (result.items) {
+      result.items = this.ensureAdditionalPropertiesFalse(result.items);
+    }
+
+    return result;
+  }
+
   async generateImage(request: VeniceImageRequest): Promise<VeniceImageResponse> {
     logger.info('Generating image', { model: request.model, prompt: request.prompt.substring(0, 100) });
     try {
-      const response = await this.retryRequest<VeniceImageResponse>(() =>
-        this.client.post('/images/generations', {
-          ...request,
-          model: request.model || 'venice-sd35',
-        })
+      // Use Venice's /image/generate endpoint with correct format
+      const imageModel = request.model || 'z-image-turbo';
+      const response = await this.retryRequest<VeniceImageResponse>(
+        () => this.client.post('/image/generate', {
+          model: imageModel,
+          prompt: request.prompt,
+          width: request.width || 1024,
+          height: request.height || 1024,
+          steps: request.steps || 20,
+          cfg_scale: request.cfg_scale || 7.5,
+          safe_mode: request.safe_mode ?? true,
+          hide_watermark: request.hide_watermark ?? false,
+        }),
+        2, // Fewer retries for image generation
+        3000 // Longer base delay
       );
-      logger.info('Image generated successfully', { id: response.id, imageCount: response.data.length });
+      logger.info('Image generated successfully', {
+        id: response.id || response.request_id,
+        imageCount: response.images?.length || 0,
+      });
       return response;
-    } catch (error) {
-      logger.error('Failed to generate image', { error: (error as Error).message });
-      throw error;
+    } catch (error: any) {
+      const errorMessage = error?.response?.data?.error?.message || error?.response?.data?.message || error?.message || 'Unknown error';
+      const statusCode = error?.response?.status;
+      logger.error('Failed to generate image', {
+        error: errorMessage,
+        statusCode,
+        model: request.model,
+        responseData: error?.response?.data,
+      });
+      throw new Error(`Image generation failed: ${errorMessage}`);
     }
   }
 
