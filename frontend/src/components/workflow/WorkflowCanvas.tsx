@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import ReactFlow, {
   Node,
   Edge,
@@ -194,19 +194,63 @@ interface WorkflowCanvasProps {
   allowInlineStart?: boolean;
 }
 
+const BASE_POLL_INTERVAL = 2000;
+const MAX_BACKOFF_INTERVAL = 15000;
+const MAX_CONSECUTIVE_ERRORS = 5;
+
 export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({ workflowId, allowInlineStart = true }) => {
   const { currentWorkflow, setCurrentWorkflow, setSelectedNode } = useWorkflowStore();
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
-  const [pollingInterval, setPollingInterval] = useState<ReturnType<typeof setInterval> | null>(null);
+  const pollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const activeWorkflowIdRef = useRef<string | null>(null);
+  const isPollingRef = useRef(false);
+  const consecutiveErrorsRef = useRef(0);
 
   // Connect handler
   const onConnect = useCallback((params: Connection) => {
     setEdges((eds) => addEdge(params, eds));
   }, [setEdges]);
 
+  const clearScheduledPoll = useCallback((resetActiveId = false) => {
+    if (pollTimeoutRef.current) {
+      clearTimeout(pollTimeoutRef.current);
+      pollTimeoutRef.current = null;
+    }
+    isPollingRef.current = false;
+    if (resetActiveId) {
+      activeWorkflowIdRef.current = null;
+    }
+  }, []);
+
   // Poll for workflow updates
-  const pollWorkflowStatus = useCallback(async (workflowId: string) => {
+  const pollWorkflowStatus = useCallback(async function poll(workflowId: string) {
+    if (!workflowId) {
+      return;
+    }
+
+    if (isPollingRef.current) {
+      return;
+    }
+
+    if (activeWorkflowIdRef.current && activeWorkflowIdRef.current !== workflowId) {
+      return;
+    }
+
+    isPollingRef.current = true;
+
+    const scheduleNextPoll = (delay: number) => {
+      if (pollTimeoutRef.current) {
+        clearTimeout(pollTimeoutRef.current);
+      }
+      pollTimeoutRef.current = setTimeout(() => {
+        if (activeWorkflowIdRef.current !== workflowId) {
+          return;
+        }
+        poll(workflowId);
+      }, delay);
+    };
+
     try {
       const response = await workflowService.getWorkflow(workflowId);
       if (response.success && response.data) {
@@ -217,54 +261,63 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({ workflowId, allo
           ...workflowData,
         };
         setCurrentWorkflow(workflow as any);
-        
+        consecutiveErrorsRef.current = 0;
+
         // Stop polling if workflow is completed or failed
         if (
           workflow.status === WorkflowStatus.COMPLETED ||
           workflow.status === WorkflowStatus.FAILED
         ) {
-          if (pollingInterval) {
-            clearInterval(pollingInterval);
-            setPollingInterval(null);
-          }
+          clearScheduledPoll(true);
+          return;
         }
+
+        scheduleNextPoll(BASE_POLL_INTERVAL);
       }
     } catch (error) {
       console.error('Failed to poll workflow status:', error);
+      consecutiveErrorsRef.current += 1;
+      if (consecutiveErrorsRef.current >= MAX_CONSECUTIVE_ERRORS) {
+        console.error('Max consecutive workflow polling errors reached. Stopping polling to avoid resource exhaustion.');
+        clearScheduledPoll(true);
+        return;
+      }
+      const backoffDelay = Math.min(
+        BASE_POLL_INTERVAL * Math.pow(2, consecutiveErrorsRef.current - 1),
+        MAX_BACKOFF_INTERVAL
+      );
+      scheduleNextPoll(backoffDelay);
+    } finally {
+      isPollingRef.current = false;
     }
-  }, [setCurrentWorkflow, pollingInterval]);
+  }, [clearScheduledPoll, setCurrentWorkflow]);
 
   // Handle workflow started
   const handleWorkflowStarted = useCallback((workflowId: string) => {
-    if (pollingInterval) {
-      clearInterval(pollingInterval);
-      setPollingInterval(null);
+    if (!workflowId) {
+      return;
     }
-    // Start polling for updates
-    const interval = setInterval(() => {
-      pollWorkflowStatus(workflowId);
-    }, 2000);
-    setPollingInterval(interval);
-    
-    // Initial poll
+    clearScheduledPoll();
+    activeWorkflowIdRef.current = workflowId;
+    consecutiveErrorsRef.current = 0;
     pollWorkflowStatus(workflowId);
-  }, [pollWorkflowStatus]);
+  }, [clearScheduledPoll, pollWorkflowStatus]);
 
   // Auto-start polling when parent provides a workflowId
   useEffect(() => {
     if (workflowId) {
       handleWorkflowStarted(workflowId);
+    } else {
+      clearScheduledPoll(true);
     }
-  }, [workflowId, handleWorkflowStarted]);
+  }, [workflowId, handleWorkflowStarted, clearScheduledPoll]);
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      if (pollingInterval) {
-        clearInterval(pollingInterval);
-      }
+      clearScheduledPoll(true);
     };
-  }, [pollingInterval]);
+  }, [clearScheduledPoll]);
 
   // Update nodes and edges when workflow changes
   useEffect(() => {
@@ -285,10 +338,7 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({ workflowId, allo
     setCurrentWorkflow(null);
     setNodes([]);
     setEdges([]);
-    if (pollingInterval) {
-      clearInterval(pollingInterval);
-      setPollingInterval(null);
-    }
+    clearScheduledPoll(true);
   };
 
   // If no workflow, show the start form or an empty state
