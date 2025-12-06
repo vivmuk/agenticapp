@@ -399,8 +399,7 @@ export class WorkflowManager {
           return (b.cycleNumber || 0) - (a.cycleNumber || 0);
         }
         return (b.createdAt ? new Date(b.createdAt).getTime() : 0) - (a.createdAt ? new Date(a.createdAt).getTime() : 0);
-      })
-      .[0];
+      })[0];
 
     return {
       id: dbWorkflow.id,
