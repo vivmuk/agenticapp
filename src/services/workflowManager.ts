@@ -390,6 +390,18 @@ export class WorkflowManager {
   }
 
   private mapDatabaseToWorkflowState(dbWorkflow: any): WorkflowState {
+    // Prefer the latest content version by cycleNumber (or createdAt as fallback)
+    const contentVersions = dbWorkflow.contentVersions || [];
+    const latestContentVersion = contentVersions
+      .slice()
+      .sort((a, b) => {
+        if (a.cycleNumber !== undefined && b.cycleNumber !== undefined) {
+          return (b.cycleNumber || 0) - (a.cycleNumber || 0);
+        }
+        return (b.createdAt ? new Date(b.createdAt).getTime() : 0) - (a.createdAt ? new Date(a.createdAt).getTime() : 0);
+      })
+      .[0];
+
     return {
       id: dbWorkflow.id,
       topic: dbWorkflow.topic,
@@ -401,7 +413,7 @@ export class WorkflowManager {
       humanReviewRequired: dbWorkflow.humanReviewRequired,
       humanReviewProvided: dbWorkflow.humanReviewProvided,
       humanReviewFeedback: dbWorkflow.humanReviewFeedback,
-      currentContent: dbWorkflow.contentVersions?.[0]?.content,
+      currentContent: latestContentVersion?.content,
       agentStatus: {},
       startedAt: dbWorkflow.startedAt,
       completedAt: dbWorkflow.completedAt,

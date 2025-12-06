@@ -210,9 +210,11 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({ workflowId, allo
     try {
       const response = await workflowService.getWorkflow(workflowId);
       if (response.success && response.data) {
+        const payload: any = response.data;
+        const workflowData = payload.workflow || payload;
         const workflow = {
-          id: (response.data as any).workflowId || (response.data as any).id || workflowId,
-          ...response.data,
+          id: workflowData.workflowId || workflowData.id || workflowId,
+          ...workflowData,
         };
         setCurrentWorkflow(workflow as any);
         
