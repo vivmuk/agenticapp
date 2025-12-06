@@ -23,6 +23,7 @@ prisma/migrations/
 # IDE
 .vscode/
 .idea/
+.claude/
 *.swp
 *.swo
 *~
