@@ -394,7 +394,7 @@ export class WorkflowManager {
     const contentVersions = dbWorkflow.contentVersions || [];
     const latestContentVersion = contentVersions
       .slice()
-      .sort((a, b) => {
+      .sort((a: any, b: any) => {
         if (a.cycleNumber !== undefined && b.cycleNumber !== undefined) {
           return (b.cycleNumber || 0) - (a.cycleNumber || 0);
         }
