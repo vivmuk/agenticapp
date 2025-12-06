@@ -63,18 +63,27 @@ function App() {
 
         {activeView === 'orchestration' && (
           <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900">Agent Orchestration</h2>
-                <p className="text-gray-500 text-sm mt-1">Watch your content being created and refined</p>
+            {/* Configuration Panel */}
+            <div className="bg-gradient-to-br from-gray-800 via-gray-700 to-purple-900 rounded-xl p-8 shadow-xl">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h2 className="text-xl font-bold text-white uppercase tracking-wide">Agent Orchestration</h2>
+                  <p className="text-gray-300 text-sm mt-1">Watch your content being created and refined</p>
+                </div>
+                <button
+                  onClick={() => setActiveView('create')}
+                  className="px-4 py-2 bg-white text-gray-900 font-bold uppercase tracking-wide rounded-lg hover:bg-gray-100 transition-all text-sm"
+                >
+                  + New Post
+                </button>
               </div>
-              <button
-                onClick={() => setActiveView('create')}
-                className="btn-secondary"
-              >
-                + New Post
-              </button>
+              <WorkflowStartForm onWorkflowStarted={(workflowId) => {
+                // Workflow started, canvas will show the workflow
+                console.log('Workflow started:', workflowId);
+              }} />
             </div>
+            
+            {/* Workflow Canvas */}
             <div className="bg-white border-2 border-gray-200 rounded-xl shadow-sm h-[600px]">
               <WorkflowCanvas />
             </div>

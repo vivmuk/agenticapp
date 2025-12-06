@@ -4,11 +4,12 @@ import { SUPPORTED_VENICE_MODELS } from '@/types';
 
 interface WorkflowStartFormProps {
   onWorkflowStarted: (workflowId: string) => void;
+  variant?: 'light' | 'dark';
 }
 
 type OutputFormat = 'linkedin_post' | 'thread' | 'article';
 
-const WorkflowStartForm: React.FC<WorkflowStartFormProps> = ({ onWorkflowStarted }) => {
+const WorkflowStartForm: React.FC<WorkflowStartFormProps> = ({ onWorkflowStarted, variant = 'light' }) => {
   const [topic, setTopic] = useState('');
   const [maxCycles, setMaxCycles] = useState(3);
   const [qualityThreshold, setQualityThreshold] = useState(0.8);
@@ -63,12 +64,35 @@ const WorkflowStartForm: React.FC<WorkflowStartFormProps> = ({ onWorkflowStarted
   ];
 
   const selectedModel = SUPPORTED_VENICE_MODELS.find(m => m.id === model);
+  const isDark = variant === 'dark';
+  const labelClass = isDark ? 'text-xs font-bold uppercase tracking-widest text-gray-300 mb-2 block' : 'form-label';
+  const inputClass = isDark 
+    ? 'w-full px-4 py-3 bg-white/10 border-2 border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-red-400 focus:ring-0 transition-all text-base'
+    : 'input-field text-lg';
+  const buttonClass = isDark
+    ? 'px-4 py-2 text-sm font-medium text-white bg-white/10 rounded-lg hover:bg-white/20 transition-all border border-white/20'
+    : 'px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-all';
+  const formatCardClass = isDark
+    ? 'p-5 border-2 border-white/20 rounded-xl cursor-pointer transition-all hover:border-white/30'
+    : 'format-card text-left';
+  const formatCardSelectedClass = isDark
+    ? 'border-red-400 bg-red-500/20'
+    : 'selected';
+  const selectClass = isDark
+    ? 'w-full px-4 py-3 bg-white/10 border-2 border-white/20 rounded-lg text-white focus:outline-none focus:border-red-400 focus:ring-0 transition-all text-base appearance-none bg-no-repeat bg-right pr-10 cursor-pointer'
+    : 'input-field';
+  const checkboxLabelClass = isDark
+    ? 'flex items-center gap-3 cursor-pointer'
+    : 'flex items-center gap-3 cursor-pointer';
+  const checkboxTextClass = isDark
+    ? 'text-sm font-medium text-white uppercase tracking-wide'
+    : 'text-sm font-medium text-gray-700 uppercase tracking-wide';
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8">
+    <form onSubmit={handleSubmit} className="space-y-6">
       {/* Topic Input */}
       <div className="space-y-3">
-        <label htmlFor="topic" className="form-label">
+        <label htmlFor="topic" className={labelClass}>
           Post Topic
         </label>
         <input
@@ -77,22 +101,21 @@ const WorkflowStartForm: React.FC<WorkflowStartFormProps> = ({ onWorkflowStarted
           value={topic}
           onChange={(e) => setTopic(e.target.value)}
           placeholder="e.g., The Future of AI in Healthcare"
-          className="input-field text-lg"
+          className={inputClass}
           disabled={isLoading}
         />
       </div>
 
       {/* Topic Suggestions */}
       <div className="space-y-3">
-        <span className="form-label">Quick Topics</span>
+        <span className={labelClass}>Topics</span>
         <div className="flex flex-wrap gap-2">
           {suggestedTopics.map((suggestion) => (
             <button
               key={suggestion}
               type="button"
               onClick={() => setTopic(suggestion)}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg
-                         hover:bg-gray-200 transition-all"
+              className={buttonClass}
             >
               {suggestion}
             </button>
@@ -102,45 +125,50 @@ const WorkflowStartForm: React.FC<WorkflowStartFormProps> = ({ onWorkflowStarted
 
       {/* Output Format */}
       <div className="space-y-3">
-        <label className="form-label">Output Format</label>
+        <label className={labelClass}>Output Format</label>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <button
             type="button"
             onClick={() => setOutputFormat('linkedin_post')}
-            className={`format-card text-left ${outputFormat === 'linkedin_post' ? 'selected' : ''}`}
+            className={`${formatCardClass} ${outputFormat === 'linkedin_post' ? formatCardSelectedClass : ''}`}
           >
-            <div className="format-card-title">LinkedIn Post</div>
-            <div className="format-card-desc">Single viral post with image.</div>
+            <div className={isDark ? 'font-bold text-white uppercase tracking-wide text-sm mb-1' : 'format-card-title'}>LinkedIn Post</div>
+            <div className={isDark ? 'text-xs text-gray-300 uppercase tracking-wide' : 'format-card-desc'}>Single viral post with image.</div>
           </button>
           <button
             type="button"
             onClick={() => setOutputFormat('thread')}
-            className={`format-card text-left ${outputFormat === 'thread' ? 'selected' : ''}`}
+            className={`${formatCardClass} ${outputFormat === 'thread' ? formatCardSelectedClass : ''}`}
           >
-            <div className="format-card-title">Thread</div>
-            <div className="format-card-desc">Multi-part thread series.</div>
+            <div className={isDark ? 'font-bold text-white uppercase tracking-wide text-sm mb-1' : 'format-card-title'}>Thread</div>
+            <div className={isDark ? 'text-xs text-gray-300 uppercase tracking-wide' : 'format-card-desc'}>Multi-part thread series.</div>
           </button>
           <button
             type="button"
             onClick={() => setOutputFormat('article')}
-            className={`format-card text-left ${outputFormat === 'article' ? 'selected' : ''}`}
+            className={`${formatCardClass} ${outputFormat === 'article' ? formatCardSelectedClass : ''}`}
           >
-            <div className="format-card-title">Article</div>
-            <div className="format-card-desc">Long-form LinkedIn article.</div>
+            <div className={isDark ? 'font-bold text-white uppercase tracking-wide text-sm mb-1' : 'format-card-title'}>Article</div>
+            <div className={isDark ? 'text-xs text-gray-300 uppercase tracking-wide' : 'format-card-desc'}>Long-form LinkedIn article.</div>
           </button>
         </div>
       </div>
 
       {/* AI Model Selection */}
       <div className="space-y-3">
-        <label htmlFor="model" className="form-label">
+        <label htmlFor="model" className={labelClass}>
           AI Model
         </label>
         <select
           id="model"
           value={model}
           onChange={(e) => setModel(e.target.value)}
-          className="input-field"
+          className={selectClass}
+          style={isDark ? {
+            backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
+            backgroundPosition: 'right 0.75rem center',
+            backgroundSize: '1.25rem 1.25rem'
+          } : undefined}
           disabled={isLoading}
         >
           <optgroup label="Fast & Affordable">
@@ -175,21 +203,21 @@ const WorkflowStartForm: React.FC<WorkflowStartFormProps> = ({ onWorkflowStarted
         {selectedModel && (
           <div className="flex flex-wrap items-center gap-2 text-sm">
             {selectedModel.traits.includes('structured_responses') && (
-              <span className="tag tag-green">Structured</span>
+              <span className={isDark ? 'inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide bg-green-500/20 text-green-300' : 'tag tag-green'}>Structured</span>
             )}
             {selectedModel.traits.includes('reasoning') && (
-              <span className="tag tag-gray">Reasoning</span>
+              <span className={isDark ? 'inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide bg-gray-500/20 text-gray-300' : 'tag tag-gray'}>Reasoning</span>
             )}
             {selectedModel.traits.includes('vision') && (
-              <span className="tag tag-gray">Vision</span>
+              <span className={isDark ? 'inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide bg-gray-500/20 text-gray-300' : 'tag tag-gray'}>Vision</span>
             )}
             {selectedModel.traits.includes('code') && (
-              <span className="tag tag-gray">Code</span>
+              <span className={isDark ? 'inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide bg-gray-500/20 text-gray-300' : 'tag tag-gray'}>Code</span>
             )}
             {selectedModel.traits.includes('premium') && (
-              <span className="tag tag-red">Premium</span>
+              <span className={isDark ? 'inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide bg-red-500/20 text-red-300' : 'tag tag-red'}>Premium</span>
             )}
-            <span className="text-gray-500 ml-2">
+            <span className={isDark ? 'text-gray-300 ml-2' : 'text-gray-500 ml-2'}>
               {selectedModel.contextTokens.toLocaleString()} context
             </span>
           </div>
@@ -198,38 +226,38 @@ const WorkflowStartForm: React.FC<WorkflowStartFormProps> = ({ onWorkflowStarted
 
       {/* Options */}
       <div className="space-y-3">
-        <label className="form-label">Options</label>
+        <label className={labelClass}>Options</label>
         <div className="flex flex-wrap gap-6">
-          <label className="flex items-center gap-3 cursor-pointer">
+          <label className={checkboxLabelClass}>
             <input
               type="checkbox"
               checked={generateImage}
               onChange={(e) => setGenerateImage(e.target.checked)}
               className="checkbox-custom"
             />
-            <span className="text-sm font-medium text-gray-700 uppercase tracking-wide">
+            <span className={checkboxTextClass}>
               Generate Image
             </span>
           </label>
-          <label className="flex items-center gap-3 cursor-pointer">
+          <label className={checkboxLabelClass}>
             <input
               type="checkbox"
               checked={factCheck}
               onChange={(e) => setFactCheck(e.target.checked)}
               className="checkbox-custom"
             />
-            <span className="text-sm font-medium text-gray-700 uppercase tracking-wide">
+            <span className={checkboxTextClass}>
               Fact Check
             </span>
           </label>
-          <label className="flex items-center gap-3 cursor-pointer">
+          <label className={checkboxLabelClass}>
             <input
               type="checkbox"
               checked={qualityReview}
               onChange={(e) => setQualityReview(e.target.checked)}
               className="checkbox-custom"
             />
-            <span className="text-sm font-medium text-gray-700 uppercase tracking-wide">
+            <span className={checkboxTextClass}>
               Quality Review
             </span>
           </label>
@@ -238,12 +266,12 @@ const WorkflowStartForm: React.FC<WorkflowStartFormProps> = ({ onWorkflowStarted
 
       {/* Advanced Settings */}
       <details className="space-y-4">
-        <summary className="form-label cursor-pointer select-none">
+        <summary className={`${labelClass} cursor-pointer select-none`}>
           Advanced Settings
         </summary>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
           <div>
-            <div className="flex items-center justify-between text-sm text-gray-600 mb-2">
+            <div className={`flex items-center justify-between text-sm mb-2 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
               <span className="font-medium uppercase tracking-wide">Max Cycles</span>
               <span className="font-bold">{maxCycles}</span>
             </div>
@@ -258,7 +286,7 @@ const WorkflowStartForm: React.FC<WorkflowStartFormProps> = ({ onWorkflowStarted
           </div>
 
           <div>
-            <div className="flex items-center justify-between text-sm text-gray-600 mb-2">
+            <div className={`flex items-center justify-between text-sm mb-2 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
               <span className="font-medium uppercase tracking-wide">Quality Threshold</span>
               <span className="font-bold">{(qualityThreshold * 100).toFixed(0)}%</span>
             </div>
@@ -286,7 +314,7 @@ const WorkflowStartForm: React.FC<WorkflowStartFormProps> = ({ onWorkflowStarted
       <button
         type="submit"
         disabled={isLoading || !topic.trim()}
-        className="btn-red w-full py-4 text-base"
+        className={`${isDark ? 'px-6 py-4 bg-red-600 text-white font-bold uppercase tracking-wide rounded-lg hover:bg-red-700 transition-all text-base w-full' : 'btn-red w-full py-4 text-base'} ${isLoading || !topic.trim() ? 'opacity-50 cursor-not-allowed' : ''}`}
       >
         {isLoading ? 'Creating Post...' : 'Create LinkedIn Post'}
       </button>
