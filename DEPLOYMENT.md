@@ -1,4 +1,4 @@
-# Deployment Guide: Agentic App on Railway with MongoDB Atlas
+ # Deployment Guide: Agentic App on Railway with MongoDB Atlas
 
 This guide provides step-by-step instructions for deploying the Agentic App to Railway.app using MongoDB Atlas as the database.
 
@@ -67,7 +67,7 @@ This guide provides step-by-step instructions for deploying the Agentic App to R
 
 Your connection string should look like:
 ```
-mongodb+srv://agentic-app-user:YOUR_PASSWORD@agentic-app-cluster.xxxxx.mongodb.net/agentic_app?retryWrites=true&w=majority
+mongodb+srv://vivgates_db_user:PLA4bKdlDjpl9U1F@agentic-app-cluster.5fyjphh.mongodb.net/agentic_app?retryWrites=true&w=majority&appName=agentic-app-cluster
 ```
 
 ## Local Development Setup
@@ -98,11 +98,11 @@ cp .env.example .env
 Edit `.env` with your configuration:
 ```env
 # Venice API Configuration
-VENICE_API_KEY=your_venice_api_key_here
+VENICE_API_KEY=lnWNeSg0pA_rQUooNpbfpPDBaj2vJnWol5WqKWrIEF
 VENICE_BASE_URL=https://api.venice.ai/api/v1
 
 # MongoDB Configuration (use your Atlas connection string)
-DATABASE_URL=mongodb+srv://username:password@cluster.mongodb.net/agentic_app?retryWrites=true&w=majority
+DATABASE_URL=mongodb+srv://vivgates_db_user:PLA4bKdlDjpl9U1F@agentic-app-cluster.5fyjphh.mongodb.net/agentic_app?retryWrites=true&w=majority&appName=agentic-app-cluster
 
 # Server Configuration
 PORT=3001
@@ -171,9 +171,9 @@ git push origin main
 2. Click "Variables" tab
 3. Add the following variables:
 ```
-VENICE_API_KEY=your_venice_api_key
+VENICE_API_KEY=lnWNeSg0pA_rQUooNpbfpPDBaj2vJnWol5WqKWrIEF
 VENICE_BASE_URL=https://api.venice.ai/api/v1
-DATABASE_URL=your_mongodb_connection_string
+DATABASE_URL=mongodb+srv://vivgates_db_user:PLA4bKdlDjpl9U1F@agentic-app-cluster.5fyjphh.mongodb.net/agentic_app?retryWrites=true&w=majority&appName=agentic-app-cluster
 NODE_ENV=production
 CORS_ORIGIN=https://your-frontend-domain.railway.app
 JWT_SECRET=your_generated_jwt_secret
@@ -223,7 +223,7 @@ VITE_APP_VERSION=1.0.0
 |----------|-------------|---------|
 | `VENICE_API_KEY` | Venice API authentication key | `lnWNeSg0pA_rQUooNpbfpPDBaj2vJnWol5WqKWrIEF` |
 | `VENICE_BASE_URL` | Venice API endpoint | `https://api.venice.ai/api/v1` |
-| `DATABASE_URL` | MongoDB connection string | `mongodb+srv://user:pass@cluster.mongodb.net/db` |
+| `DATABASE_URL` | MongoDB connection string | `mongodb+srv://vivgates_db_user:PLA4bKdlDjpl9U1F@agentic-app-cluster.5fyjphh.mongodb.net/agentic_app?retryWrites=true&w=majority&appName=agentic-app-cluster` |
 | `NODE_ENV` | Environment mode | `production` |
 | `PORT` | Server port | `3001` |
 | `CORS_ORIGIN` | Allowed frontend origin | `https://app.yourdomain.com` |
@@ -345,7 +345,6 @@ curl https://your-backend-domain.railway.app/health
 - Review resource utilization
 
 ### Getting Help
-
 - [Railway Documentation](https://docs.railway.app/)
 - [MongoDB Atlas Documentation](https://docs.mongodb.com/atlas/)
 - [Project Repository Issues](https://github.com/your-username/agentic-app/issues)
@@ -388,4 +387,4 @@ For database issues:
 2. **Database Backups**: MongoDB Atlas handles automatically
 3. **Log Rotation**: Configure log retention
 4. **Security Patches**: Apply promptly
-5. **Performance Reviews**: Monthly performance checks
+5. **Performance Reviews**: Monthly performance checks 
