@@ -182,7 +182,8 @@ export class VeniceAPIClient {
     // Convert Zod schema to JSON Schema format for Venice API
     // Extract to variable to help TypeScript with type inference
     const schemaForConversion: z.ZodTypeAny = schema;
-    const jsonSchema = zodToJsonSchema(schemaForConversion, {
+    const toJsonSchema = zodToJsonSchema as unknown as (schema: z.ZodTypeAny, options?: any) => Record<string, any>;
+    const jsonSchema = toJsonSchema(schemaForConversion, {
       $refStrategy: 'none',
       target: 'openApi3'
     });
