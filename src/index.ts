@@ -54,8 +54,11 @@ app.use((req, res, next) => {
   next();
 });
 
-// API routes
-app.use('/api/workflows', workflowsRouter);
+// API routes - with debug logging
+app.use('/api/workflows', (req, res, next) => {
+  logger.info('Workflow route hit', { method: req.method, path: req.path, url: req.url, originalUrl: req.originalUrl });
+  next();
+}, workflowsRouter);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
