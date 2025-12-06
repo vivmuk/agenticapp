@@ -1,6 +1,5 @@
  import { create } from 'zustand';
-import { subscribeWithSelector } from 'zustand/middleware';
-import { Workflow, WorkflowStatus, AgentType, AgentStatus } from '@/types';
+import { Workflow, WorkflowStatus, AgentType } from '@/types';
 
 // React Flow types
 export interface WorkflowNode {
@@ -267,10 +266,3 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
     console.log('Providing human review for workflow:', workflowId, feedback);
   },
 }));
-
-// Subscribe to store changes for debugging
-if (typeof window !== 'undefined') {
-  subscribeWithSelector(useWorkflowStore, (state) => state.currentWorkflow, (workflow) => {
-    console.log('Current workflow changed:', workflow);
-  });
-}

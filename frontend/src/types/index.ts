@@ -110,6 +110,7 @@ export interface HumanReview {
   dueDate?: Date;
   createdAt: Date;
   updatedAt: Date;
+  reviewComments?: ReviewComment[];
 }
 
 export interface ReviewComment {
@@ -335,4 +336,33 @@ export interface WorkflowState {
   };
   humanReviewProvided: boolean;
   humanReviewFeedback?: string;
+}
+
+// Content Package type for generated content
+export interface ContentPackage {
+  definition: string;
+  linkedinPost: string;
+  imagePrompt: string;
+  imageUrl?: string;
+  keyClaims: string[];
+  metadata?: Record<string, any>;
+}
+
+// Additional types for Human Review
+export interface ReviewMetrics {
+  totalReviews: number;
+  averageReviewTime: number;
+  averageQualityImprovement: number;
+  decisionBreakdown: {
+    accept: number;
+    improve: number;
+    reject: number;
+  };
+  categoryBreakdown: Record<FeedbackCategoryType, number>;
+}
+
+export interface CustomEdits {
+  definition?: string;
+  linkedinPost?: string;
+  imagePrompt?: string;
 }

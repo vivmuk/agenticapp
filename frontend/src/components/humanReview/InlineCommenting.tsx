@@ -1,10 +1,11 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { ReviewComment, CommentType } from '@/types';
 
 interface InlineCommentingProps {
   content: string;
   contentType: 'definition' | 'linkedinPost' | 'imagePrompt';
+  humanReviewId?: string;
   onAddComment: (comment: Omit<ReviewComment, 'id' | 'timestamp'>) => void;
   existingComments?: ReviewComment[];
   readOnly?: boolean;
@@ -13,6 +14,7 @@ interface InlineCommentingProps {
 const InlineCommenting: React.FC<InlineCommentingProps> = ({
   content,
   contentType,
+  humanReviewId = '',
   onAddComment,
   existingComments = [],
   readOnly = false
@@ -53,6 +55,7 @@ const InlineCommenting: React.FC<InlineCommentingProps> = ({
   const handleAddComment = () => {
     if (selectedText && selectionRange && commentText.trim()) {
       onAddComment({
+        humanReviewId,
         contentType,
         text: commentText,
         selection: {

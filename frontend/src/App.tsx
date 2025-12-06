@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { WorkflowCanvas } from './components/workflow/WorkflowCanvas';
-import { HumanReviewPanel } from './components/humanReview/HumanReviewPanel';
+import HumanReviewPanel from './components/humanReview/HumanReviewPanel';
 
 function App() {
   const [activeView, setActiveView] = useState<'workflow' | 'review'>('workflow');

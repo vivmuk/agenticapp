@@ -1,4 +1,3 @@
- import React from 'react';
 import { motion } from 'framer-motion';
 import { useWorkflowStore } from '@/stores/workflowStore';
 import { AgentType, AgentStatus } from '@/types';
@@ -65,9 +64,9 @@ const getAgentTypeLabel = (agentType: AgentType) => {
 };
 
 export const NodeDetailsPanel: React.FC = () => {
-  const { currentWorkflow, visualizationState, selectedNodeId, setSelectedNode } = useWorkflowStore();
-  const selectedNode = visualizationState.nodes.find((node: any) => node.id === selectedNodeId);
-  const agentStatus = selectedNode ? currentWorkflow?.agentStatus[AgentType[selectedNode.data.agentType]] : undefined;
+  const { currentWorkflow, nodes, selectedNodeId, setSelectedNode } = useWorkflowStore();
+  const selectedNode = nodes.find((node) => node.id === selectedNodeId);
+  const agentStatus = selectedNode ? currentWorkflow?.agentStatus[selectedNode.data.agentType] : undefined;
   const metrics = selectedNode?.data.metrics;
 
   if (!selectedNode) {
@@ -107,7 +106,7 @@ export const NodeDetailsPanel: React.FC = () => {
           </div>
         </div>
         <button
-          onClick={() => setSelectedNode(undefined)}
+          onClick={() => setSelectedNode(null)}
           className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
         >
           <span className="text-gray-500 dark:text-gray-400">×</span>
@@ -141,7 +140,7 @@ export const NodeDetailsPanel: React.FC = () => {
                   {key.replace('_', ' ')}
                 </span>
                 <span className="text-sm text-gray-600 dark:text-gray-400">
-                  {typeof value === 'number' ? value.toFixed(2) : value}
+                  {typeof value === 'number' ? (value as number).toFixed(2) : String(value)}
                 </span>
               </div>
             ))}

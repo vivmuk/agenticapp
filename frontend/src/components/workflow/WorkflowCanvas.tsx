@@ -189,7 +189,7 @@ const generateWorkflowLayout = (workflowState: any): { nodes: Node[]; edges: Edg
 };
 
 export const WorkflowCanvas: React.FC = () => {
-  const { currentWorkflow, updateNodeStatus, setSelectedNode } = useWorkflowStore();
+  const { currentWorkflow, setSelectedNode } = useWorkflowStore();
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
 
@@ -206,16 +206,6 @@ export const WorkflowCanvas: React.FC = () => {
       setEdges(workflowEdges);
     }
   }, [currentWorkflow, setNodes, setEdges]);
-
-  // Update node statuses based on workflow state
-  useEffect(() => {
-    if (currentWorkflow) {
-      Object.entries(currentWorkflow.agentStatus).forEach(([agentType, status]) => {
-        const nodeId = agentType.toLowerCase().replace('_', '-');
-        updateNodeStatus(nodeId, status.status);
-      });
-    }
-  }, [currentWorkflow, updateNodeStatus]);
 
   // Node click handler
   const onNodeClick = useCallback((_event: React.MouseEvent, node: Node) => {

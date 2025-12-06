@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { HumanReviewWithComments, ReviewAction, FeedbackCategoryType } from '@/stores/humanReviewStore';
+import { ReviewAction, FeedbackCategoryType } from '@/types';
+import { HumanReviewWithComments } from '@/stores/humanReviewStore';
 
 interface DecisionControlsProps {
   review: HumanReviewWithComments;

@@ -1,15 +1,20 @@
-import React from 'react';
 import { motion } from 'framer-motion';
-import { HumanReview } from '@/types';
-import { HumanReviewStatus, ReviewAction } from '@/types';
+import {
+  HumanReview,
+  HumanReviewStatus,
+  ReviewAction,
+  ReviewPriority,
+  TriggerReason,
+  FeedbackCategoryType
+} from '@/types';
 
 interface ReviewHistoryProps {
-  workflowId: string;
+  workflowId?: string;
   history?: HumanReview[];
 }
 
-const ReviewHistory: React.FC<ReviewHistoryProps> = ({ workflowId, history = [] }) => {
-  const getStatusColor = (status: HumanReviewStatus) => {
+const ReviewHistory: React.FC<ReviewHistoryProps> = ({ workflowId = '', history = [] }) => {
+  const _getStatusColor = (status: HumanReviewStatus) => {
     switch (status) {
       case HumanReviewStatus.PENDING:
         return 'text-yellow-600 bg-yellow-50';
@@ -56,18 +61,18 @@ const ReviewHistory: React.FC<ReviewHistoryProps> = ({ workflowId, history = [] 
   const mockHistory: HumanReview[] = history.length > 0 ? history : [
     {
       id: 'review-1',
-      workflowRunId: workflowId,
+      workflowId: workflowId,
       reviewerId: 'reviewer-1',
       reviewerName: 'John Doe',
       status: HumanReviewStatus.COMPLETED,
-      priority: 'MEDIUM' as any,
-      triggerReason: 'MAX_CYCLES_REACHED' as any,
+      priority: ReviewPriority.MEDIUM,
+      triggerReason: TriggerReason.MAX_CYCLES_REACHED,
       action: ReviewAction.IMPROVE,
       feedback: 'Content needs better examples and more recent references. The definition is accurate but lacks depth.',
       qualityRating: 6,
       feedbackCategories: [
-        { category: 'FACTUAL_ACCURACY' as any, rating: 8, comments: 'Good factual basis' },
-        { category: 'ENGAGEMENT' as any, rating: 5, comments: 'Needs more engaging examples' },
+        { category: FeedbackCategoryType.FACTUAL_ACCURACY, rating: 8, comments: 'Good factual basis' },
+        { category: FeedbackCategoryType.ENGAGEMENT, rating: 5, comments: 'Needs more engaging examples' },
       ],
       reviewStartTime: new Date(Date.now() - 2 * 60 * 60 * 1000),
       reviewCompletionTime: new Date(Date.now() - 1.5 * 60 * 60 * 1000),
@@ -78,19 +83,19 @@ const ReviewHistory: React.FC<ReviewHistoryProps> = ({ workflowId, history = [] 
     },
     {
       id: 'review-2',
-      workflowRunId: workflowId,
+      workflowId: workflowId,
       reviewerId: 'reviewer-2',
       reviewerName: 'Jane Smith',
       status: HumanReviewStatus.COMPLETED,
-      priority: 'HIGH' as any,
-      triggerReason: 'QUALITY_THRESHOLD_NOT_MET' as any,
+      priority: ReviewPriority.HIGH,
+      triggerReason: TriggerReason.QUALITY_THRESHOLD_NOT_MET,
       action: ReviewAction.ACCEPT,
       feedback: 'Much improved after the first review. The examples are now relevant and the content is comprehensive.',
       qualityRating: 8,
       feedbackCategories: [
-        { category: 'FACTUAL_ACCURACY' as any, rating: 9, comments: 'Excellent accuracy' },
-        { category: 'ENGAGEMENT' as any, rating: 8, comments: 'Much more engaging' },
-        { category: 'CLARITY' as any, rating: 8, comments: 'Clear and well-structured' },
+        { category: FeedbackCategoryType.FACTUAL_ACCURACY, rating: 9, comments: 'Excellent accuracy' },
+        { category: FeedbackCategoryType.ENGAGEMENT, rating: 8, comments: 'Much more engaging' },
+        { category: FeedbackCategoryType.CLARITY, rating: 8, comments: 'Clear and well-structured' },
       ],
       reviewStartTime: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
       reviewCompletionTime: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000 + 20 * 60 * 1000),

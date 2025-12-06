@@ -1,8 +1,8 @@
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
-import { 
-  HumanReview, 
-  ReviewComment, 
+import {
+  HumanReview,
+  ReviewComment,
   ReviewQueueItem,
   ReviewMetrics,
   HumanReviewStatus,
@@ -14,24 +14,6 @@ import {
   FeedbackCategory,
   CustomEdits
 } from '@/types';
-// Define missing interfaces that aren't exported from types
-export interface ReviewMetrics {
-  totalReviews: number;
-  averageReviewTime: number;
-  averageQualityImprovement: number;
-  decisionBreakdown: {
-    accept: number;
-    improve: number;
-    reject: number;
-  };
-  categoryBreakdown: Record<FeedbackCategoryType, number>;
-}
-
-export interface CustomEdits {
-  definition?: string;
-  linkedinPost?: string;
-  imagePrompt?: string;
-}
 
 // Extended HumanReview interface for store state
 export interface HumanReviewWithComments extends HumanReview {
@@ -328,7 +310,7 @@ export const useHumanReviewStore = create<HumanReviewState>()(
 );
 
 // Auto-save effect
-let autoSaveInterval: NodeJS.Timeout | null = null;
+let autoSaveInterval: ReturnType<typeof setInterval> | null = null;
 
 export const startAutoSave = () => {
   if (autoSaveInterval) {

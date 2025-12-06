@@ -1,7 +1,5 @@
-import React from 'react';
 import { motion } from 'framer-motion';
-import { ReviewQueueItem } from '@/types';
-import { ReviewPriority, HumanReviewStatus } from '@/types';
+import { ReviewQueueItem, ReviewPriority, TriggerReason } from '@/types';
 
 interface ReviewQueueProps {
   queue?: ReviewQueueItem[];
@@ -44,7 +42,7 @@ const ReviewQueue: React.FC<ReviewQueueProps> = ({ queue = [], onReviewSelect })
       workflowId: 'workflow-1',
       topic: 'Artificial Intelligence Overview',
       priority: ReviewPriority.HIGH,
-      triggerReason: 'MAX_CYCLES_REACHED',
+      triggerReason: TriggerReason.MAX_CYCLES_REACHED,
       currentCycle: 3,
       maxCycles: 3,
       qualityScore: 6.5,
@@ -57,7 +55,7 @@ const ReviewQueue: React.FC<ReviewQueueProps> = ({ queue = [], onReviewSelect })
       workflowId: 'workflow-2',
       topic: 'Machine Learning Fundamentals',
       priority: ReviewPriority.MEDIUM,
-      triggerReason: 'QUALITY_THRESHOLD_NOT_MET',
+      triggerReason: TriggerReason.QUALITY_THRESHOLD_NOT_MET,
       currentCycle: 2,
       maxCycles: 3,
       qualityScore: 5.8,

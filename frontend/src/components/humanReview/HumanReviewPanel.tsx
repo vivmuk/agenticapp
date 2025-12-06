@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { useHumanReviewStore, HumanReviewWithComments } from '@/stores/humanReviewStore';
-import { HumanReviewStatus, ReviewPriority } from '@/types';
+import { useHumanReviewStore } from '@/stores/humanReviewStore';
+import { HumanReviewStatus, ReviewPriority, ReviewAction, ReviewQueueItem } from '@/types';
 import ContentDisplay from './ContentDisplay';
 import CritiqueSummary from './CritiqueSummary';
 import DecisionControls from './DecisionControls';
@@ -9,7 +9,7 @@ import ReviewHistory from './ReviewHistory';
 import ReviewQueue from './ReviewQueue';
 
 interface HumanReviewPanelProps {
-  workflowId: string;
+  workflowId?: string;
   onClose?: () => void;
 }
 
@@ -36,7 +36,7 @@ const HumanReviewPanel: React.FC<HumanReviewPanelProps> = ({ workflowId, onClose
   useEffect(() => {
     // Load review data when component mounts
     loadReviewData();
-    
+
     return () => {
       endReviewSession();
     };
@@ -44,36 +44,38 @@ const HumanReviewPanel: React.FC<HumanReviewPanelProps> = ({ workflowId, onClose
 
   const loadReviewData = async () => {
     try {
-      // Load current review
-      const reviewResponse = await fetch(`/api/workflows/${workflowId}`);
-      if (reviewResponse.ok) {
-        const reviewData = await reviewResponse.json();
-        if (reviewData.data.humanReview) {
-          setCurrentReview(reviewData.data.humanReview);
+      // Load current review if workflowId is provided
+      if (workflowId) {
+        const reviewResponse = await fetch(`/api/workflows/${workflowId}`);
+        if (reviewResponse.ok) {
+          const reviewData = await reviewResponse.json();
+          if (reviewData.data?.humanReview) {
+            setCurrentReview(reviewData.data.humanReview);
+          }
         }
+
+        // Load review history for this workflow
+        const historyResponse = await fetch(`/api/human-review/${workflowId}/history`);
+        if (historyResponse.ok) {
+          const historyData = await historyResponse.json();
+          setReviewHistory(historyData.data?.reviewHistory || []);
+        }
+
+        startReviewSession(workflowId);
       }
 
-      // Load review queue
+      // Always load review queue
       const queueResponse = await fetch('/api/human-review/queue');
       if (queueResponse.ok) {
         const queueData = await queueResponse.json();
-        setReviewQueue(queueData.data.queue);
+        setReviewQueue(queueData.data?.queue || []);
       }
-
-      // Load review history
-      const historyResponse = await fetch(`/api/human-review/${workflowId}/history`);
-      if (historyResponse.ok) {
-        const historyData = await historyResponse.json();
-        setReviewHistory(historyData.data.reviewHistory);
-      }
-
-      startReviewSession(workflowId);
     } catch (error) {
       console.error('Failed to load review data:', error);
     }
   };
 
-  const handleSubmitReview = async (action: 'ACCEPT' | 'IMPROVE' | 'REJECT') => {
+  const handleSubmitReview = async (action: ReviewAction) => {
     await submitReview(action);
     if (onClose) {
       onClose();
@@ -229,7 +231,17 @@ const HumanReviewPanel: React.FC<HumanReviewPanelProps> = ({ workflowId, onClose
         {/* Queue Sidebar */}
         {showQueue && (
           <div className="w-80 border-r border-gray-200 dark:border-gray-700 overflow-y-auto">
-            <ReviewQueue onReviewSelect={(review) => setCurrentReview(review)} />
+            <ReviewQueue onReviewSelect={(queueItem: ReviewQueueItem) => {
+              // Load the full review data when selecting from queue
+              fetch(`/api/workflows/${queueItem.workflowId}`)
+                .then(res => res.json())
+                .then(data => {
+                  if (data.data?.humanReview) {
+                    setCurrentReview(data.data.humanReview);
+                  }
+                })
+                .catch(err => console.error('Failed to load review:', err));
+            }} />
           </div>
         )}
 
