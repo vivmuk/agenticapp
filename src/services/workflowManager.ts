@@ -1,4 +1,3 @@
-import { v4 as uuidv4 } from 'uuid';
 import { PrismaClient } from '@prisma/client';
 import {
   AgentType,
@@ -35,32 +34,51 @@ export class WorkflowManager {
   async startWorkflow(input: WorkflowStartInput): Promise<WorkflowState> {
     logger.info('Starting new workflow', { topic: input.topic, maxCycles: input.maxCycles });
 
-    const workflowId = uuidv4();
+    // Convert qualityThreshold from 0-1 scale to 0-10 scale for database
+    // Frontend sends 0-1, but database stores 0-10
+    const qualityThreshold = input.qualityThreshold 
+      ? input.qualityThreshold * 10 
+      : 7.0;
+
+    // Create workflow in database first to get the generated ID
+    const created = await this.prisma.workflowRun.create({
+      data: {
+        topic: input.topic,
+        status: WorkflowStatus.INITIALIZING,
+        currentCycle: 1,
+        maxCycles: input.maxCycles || 3,
+        qualityThreshold: qualityThreshold,
+        humanReviewRequired: false,
+        humanReviewProvided: false,
+        startedAt: new Date(),
+      },
+    });
+
     const workflowState: WorkflowState = {
-      id: workflowId,
-      topic: input.topic,
-      status: WorkflowStatus.INITIALIZING,
-      currentCycle: 1,
-      maxCycles: input.maxCycles || 3,
-      qualityThreshold: input.qualityThreshold || 7.0,
-      humanReviewRequired: false,
-      humanReviewProvided: false,
+      id: created.id,
+      topic: created.topic,
+      status: created.status as WorkflowStatus,
+      currentCycle: created.currentCycle,
+      maxCycles: created.maxCycles,
+      qualityThreshold: created.qualityThreshold,
+      humanReviewRequired: created.humanReviewRequired,
+      humanReviewProvided: created.humanReviewProvided,
       agentStatus: {
         [AgentType.CONTENT_GENERATOR]: { status: 'idle' },
         [AgentType.WEB_SEARCH_CRITIC]: { status: 'idle' },
         [AgentType.QUALITY_CRITIC]: { status: 'idle' },
       },
-      startedAt: new Date(),
+      startedAt: created.startedAt,
     };
 
     try {
-      await this.saveWorkflowState(workflowState);
       const finalState = await this.executeWorkflowCycle(workflowState);
       return finalState;
     } catch (error) {
       logger.error('Workflow failed to start', {
-        workflowId,
+        workflowId: workflowState.id,
         error: (error as Error).message,
+        stack: (error as Error).stack,
       });
 
       workflowState.status = WorkflowStatus.FAILED;
@@ -289,9 +307,9 @@ export class WorkflowManager {
 
   private async saveWorkflowState(workflowState: WorkflowState): Promise<void> {
     try {
-      await this.prisma.workflowRun.upsert({
+      await this.prisma.workflowRun.update({
         where: { id: workflowState.id },
-        update: {
+        data: {
           status: workflowState.status,
           currentCycle: workflowState.currentCycle,
           maxCycles: workflowState.maxCycles,
@@ -300,53 +318,59 @@ export class WorkflowManager {
           humanReviewRequired: workflowState.humanReviewRequired,
           humanReviewProvided: workflowState.humanReviewProvided,
           humanReviewFeedback: workflowState.humanReviewFeedback,
-          completedAt: workflowState.completedAt,
-        },
-        create: {
-          id: workflowState.id,
-          topic: workflowState.topic,
-          status: workflowState.status,
-          currentCycle: workflowState.currentCycle,
-          maxCycles: workflowState.maxCycles,
-          qualityThreshold: workflowState.qualityThreshold,
-          finalQualityScore: workflowState.finalQualityScore,
-          humanReviewRequired: workflowState.humanReviewRequired,
-          humanReviewProvided: workflowState.humanReviewProvided,
-          humanReviewFeedback: workflowState.humanReviewFeedback,
-          startedAt: workflowState.startedAt,
           completedAt: workflowState.completedAt,
         },
       });
 
       if (workflowState.currentContent) {
-        await this.prisma.contentVersion.upsert({
+        // Check if content version already exists
+        const existing = await this.prisma.contentVersion.findFirst({
           where: {
-            workflowRunId_cycleNumber: {
-              workflowRunId: workflowState.id,
-              cycleNumber: workflowState.currentCycle,
-            },
-          },
-          update: {
-            content: workflowState.currentContent as any,
-            imageUrl: workflowState.currentContent.imageUrl,
-            metadata: workflowState.currentContent.metadata as any,
-          },
-          create: {
-            id: uuidv4(),
             workflowRunId: workflowState.id,
             cycleNumber: workflowState.currentCycle,
-            versionType: workflowState.currentCycle === 1 ? 'INITIAL' : 'IMPROVED',
-            content: workflowState.currentContent as any,
-            imageUrl: workflowState.currentContent.imageUrl,
-            metadata: workflowState.currentContent.metadata as any,
           },
         });
+
+        if (existing) {
+          await this.prisma.contentVersion.update({
+            where: { id: existing.id },
+            data: {
+              content: workflowState.currentContent as any,
+              imageUrl: workflowState.currentContent.imageUrl,
+              metadata: workflowState.currentContent.metadata as any,
+            },
+          });
+        } else {
+          await this.prisma.contentVersion.create({
+            data: {
+              workflowRunId: workflowState.id,
+              cycleNumber: workflowState.currentCycle,
+              versionType: workflowState.currentCycle === 1 ? 'INITIAL' : 'IMPROVED',
+              content: workflowState.currentContent as any,
+              imageUrl: workflowState.currentContent.imageUrl,
+              metadata: workflowState.currentContent.metadata as any,
+            },
+          });
+        }
       }
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorStack = error instanceof Error ? error.stack : undefined;
+      
       logger.error('Failed to save workflow state', {
         workflowId: workflowState.id,
-        error: (error as Error).message,
+        error: errorMessage,
+        stack: errorStack,
+        workflowState: {
+          status: workflowState.status,
+          currentCycle: workflowState.currentCycle,
+          topic: workflowState.topic,
+        },
       });
+      
+      console.error('[ERROR] Failed to save workflow state:', errorMessage);
+      console.error('[ERROR] Stack:', errorStack);
+      
       throw error;
     }
   }
