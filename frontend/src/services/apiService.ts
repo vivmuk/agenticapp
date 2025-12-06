@@ -13,7 +13,13 @@ import {
 export const API_BASE_URL = 
   import.meta.env.VITE_API_URL || 
   import.meta.env.VITE_API_BASE_URL || 
-  window.location.origin;
+  (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3001');
+
+// Debug logging (remove in production)
+if (typeof window !== 'undefined') {
+  console.log('[API] Base URL:', API_BASE_URL);
+  console.log('[API] VITE_API_URL env:', import.meta.env.VITE_API_URL);
+}
 
 const api = axios.create({
   baseURL: `${API_BASE_URL}/api`,
@@ -22,6 +28,18 @@ const api = axios.create({
     'Content-Type': 'application/json',
   },
 });
+
+// Add request interceptor to log requests
+api.interceptors.request.use(
+  (config) => {
+    console.log('[API] Request:', config.method?.toUpperCase(), config.url, '→', config.baseURL + config.url);
+    return config;
+  },
+  (error) => {
+    console.error('[API] Request error:', error);
+    return Promise.reject(error);
+  }
+);
 
 // Request interceptor for error handling
 api.interceptors.response.use(
