@@ -3,8 +3,8 @@ FROM node:18-alpine AS base
 
 # Install dependencies only when needed
 FROM base AS deps
-# Check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine to understand why libc6-compat might be needed.
-RUN apk add --no-cache libc6-compat
+# Install libc6-compat and openssl for Prisma
+RUN apk add --no-cache libc6-compat openssl openssl-dev
 WORKDIR /app
 
 # Install dependencies based on the preferred package manager
@@ -14,6 +14,8 @@ RUN npm install --legacy-peer-deps
 # Rebuild the source code only when needed
 FROM base AS builder
 WORKDIR /app
+# Install openssl for Prisma generate
+RUN apk add --no-cache openssl openssl-dev
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
@@ -27,7 +29,10 @@ RUN npm run build
 FROM base AS runner
 WORKDIR /app
 
-ENV NODE_ENV production
+# Install openssl for Prisma runtime
+RUN apk add --no-cache openssl
+
+ENV NODE_ENV=production
 
 # Create a non-root user
 RUN addgroup --system --gid 1001 nodejs
@@ -44,10 +49,6 @@ USER nodejs
 
 # Expose port
 EXPOSE 3001
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD node dist/healthcheck.js || exit 1
 
 # Start the application
 CMD ["npm", "start"]
