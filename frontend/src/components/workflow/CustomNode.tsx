@@ -1,4 +1,4 @@
- import React from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
 import { Handle, Position, NodeProps } from 'reactflow';
 import { AgentType, AgentStatus, CustomNodeData } from '@/types';
@@ -48,7 +48,7 @@ export const CustomNode: React.FC<NodeProps<CustomNodeData>> = ({ data, selected
         selected ? 'ring-2 ring-blue-500 ring-offset-2' : ''
       } ${
         hasError ? 'border-red-500' : 'border-gray-200'
-      } dark:border-gray-700 p-4 bg-white dark:bg-gray-800 shadow-lg transition-all duration-300"
+      } dark:border-gray-700 p-4 bg-white dark:bg-gray-800 shadow-lg transition-all duration-300`}
     >
       {/* Input handle */}
       <Handle
@@ -56,7 +56,7 @@ export const CustomNode: React.FC<NodeProps<CustomNodeData>> = ({ data, selected
         position={Position.Top}
         className="w-3 h-3 bg-gray-400 border-2 border-white dark:border-gray-800"
       />
-      
+
       <div className="space-y-3">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -73,7 +73,7 @@ export const CustomNode: React.FC<NodeProps<CustomNodeData>> = ({ data, selected
               </p>
             </div>
           </div>
-          
+
           {/* Status indicator */}
           <div className="flex items-center space-x-1">
             {isRunning && <Loader2 className="w-4 h-4 text-blue-500 animate-spin" />}
@@ -126,16 +126,16 @@ export const CustomNode: React.FC<NodeProps<CustomNodeData>> = ({ data, selected
             </p>
           </div>
         )}
+      </div>
 
-        {/* Output handle */}
-        <Handle
-          type="source"
-          position={Position.Bottom}
-          className="w-3 h-3 bg-gray-400 border-2 border-white dark:border-gray-800"
-        />
-      
-      </motion.div>
-    );
-  };
-  
-  export default CustomNode;
+      {/* Output handle */}
+      <Handle
+        type="source"
+        position={Position.Bottom}
+        className="w-3 h-3 bg-gray-400 border-2 border-white dark:border-gray-800"
+      />
+    </motion.div>
+  );
+};
+
+export default CustomNode;

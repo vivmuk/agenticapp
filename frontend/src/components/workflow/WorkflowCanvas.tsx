@@ -1,8 +1,19 @@
- import React, { useCallback, useEffect, useMemo } from 'react';
-import ReactFlow, { Node, Edge, Background, Controls, MiniMap, useNodesState, useEdgesState, addEdge, Connection, MarkerType } from 'reactflow';
+import React, { useCallback, useEffect } from 'react';
+import ReactFlow, {
+  Node,
+  Edge,
+  Background,
+  Controls,
+  MiniMap,
+  useNodesState,
+  useEdgesState,
+  addEdge,
+  Connection,
+  MarkerType
+} from 'reactflow';
 import { motion } from 'framer-motion';
 import { useWorkflowStore } from '@/stores/workflowStore';
-import { AgentType, WorkflowStatus, WorkflowNode, WorkflowEdge } from '@/types';
+import { AgentType, WorkflowStatus } from '@/types';
 import CustomNode from './CustomNode';
 import 'reactflow/dist/style.css';
 
@@ -13,12 +24,10 @@ const nodeTypes = {
 const generateWorkflowLayout = (workflowState: any): { nodes: Node[]; edges: Edge[] } => {
   const nodes: Node[] = [];
   const edges: Edge[] = [];
-  const nodeWidth = 280;
-  const nodeHeight = 150;
-  const verticalSpacing = 200;
   const horizontalSpacing = 350;
   const startX = 100;
   const startY = 50;
+  const verticalSpacing = 200;
 
   // Content Generator Node
   nodes.push({
@@ -95,16 +104,51 @@ const generateWorkflowLayout = (workflowState: any): { nodes: Node[]; edges: Edg
     style: {
       stroke: '#3b82f6',
       strokeWidth: 2,
-    markerEnd: { type: MarkerType.arrow, color: '#3b82f6',
     },
-    data: { flowType: 'data' as const },
+    markerEnd: {
+      type: MarkerType.Arrow,
+      color: '#3b82f6',
+    },
   });
+
+  edges.push({
+    id: edgeId('web-search-critic', 'quality-critic'),
+    source: 'web-search-critic',
+    target: 'quality-critic',
+    animated: workflowState.status === WorkflowStatus.QUALITY_CRITIC,
+    style: {
+      stroke: '#3b82f6',
+      strokeWidth: 2,
+    },
+    markerEnd: {
+      type: MarkerType.Arrow,
+      color: '#3b82f6',
+    },
+  });
+
+  // Add human review edge if required
+  if (workflowState.humanReviewRequired) {
+    edges.push({
+      id: edgeId('quality-critic', 'human-review'),
+      source: 'quality-critic',
+      target: 'human-review',
+      animated: workflowState.status === WorkflowStatus.HUMAN_REVIEW,
+      style: {
+        stroke: '#3b82f6',
+        strokeWidth: 2,
+      },
+      markerEnd: {
+        type: MarkerType.Arrow,
+        color: '#3b82f6',
+      },
+    });
+  }
 
   // Add cycle feedback edges if in improvement cycles
   if (workflowState.currentCycle > 1) {
     const feedbackY = startY + verticalSpacing;
     nodes.push({
-      id: `cycle-feedback`,
+      id: 'cycle-feedback',
       type: 'custom',
       position: { x: startX + horizontalSpacing, y: feedbackY },
       data: {
@@ -114,12 +158,12 @@ const generateWorkflowLayout = (workflowState: any): { nodes: Node[]; edges: Edg
         progress: 100,
       },
     });
-    
-    // Add feedback edge from quality critic to back to content generator for cycle improvement
+
+    // Add feedback edge from quality critic back to content generator
     edges.push({
       id: edgeId('quality-critic', 'cycle-feedback'),
       source: 'quality-critic',
-      target: 'content-generator',
+      target: 'cycle-feedback',
       animated: false,
       style: {
         stroke: '#8b5cf6',
@@ -127,9 +171,10 @@ const generateWorkflowLayout = (workflowState: any): { nodes: Node[]; edges: Edg
         strokeDasharray: '5 5',
       },
     });
+
     edges.push({
       id: edgeId('cycle-feedback', 'content-generator'),
-      source: 'quality-critic',
+      source: 'cycle-feedback',
       target: 'content-generator',
       animated: workflowState.status === WorkflowStatus.CONTENT_GENERATION,
       style: {
@@ -148,6 +193,11 @@ export const WorkflowCanvas: React.FC = () => {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
 
+  // Connect handler
+  const onConnect = useCallback((params: Connection) => {
+    setEdges((eds) => addEdge(params, eds));
+  }, [setEdges]);
+
   // Update nodes and edges when workflow changes
   useEffect(() => {
     if (currentWorkflow) {
@@ -155,7 +205,7 @@ export const WorkflowCanvas: React.FC = () => {
       setNodes(workflowNodes);
       setEdges(workflowEdges);
     }
-  }, [currentWorkflow, setNodes, setEdges, onNodesChange, onEdgesChange, onConnect]);
+  }, [currentWorkflow, setNodes, setEdges]);
 
   // Update node statuses based on workflow state
   useEffect(() => {
@@ -165,22 +215,16 @@ export const WorkflowCanvas: React.FC = () => {
         updateNodeStatus(nodeId, status.status);
       });
     }
-  }, [currentWorkflow, setNodes, setEdges, onNodesChange, onEdgesChange, onConnect);
+  }, [currentWorkflow, updateNodeStatus]);
 
   // Node click handler
-  const onNodeClick = useCallback((event: React.MouseEvent, node: Node) => {
+  const onNodeClick = useCallback((_event: React.MouseEvent, node: Node) => {
     setSelectedNode(node.id);
   }, [setSelectedNode]);
-
-  // Connect handler
-  const onConnect = useCallback((params: Connection) => {
-    setEdges((eds) => addEdge(params, eds));
-  }, [setEdges]);
 
   // Minimap style
   const minimapStyle = {
     backgroundColor: '#f3f4f6',
-    border: '1px solid #d1d5db',
     border: '1px solid #d1d5db',
   };
 
@@ -205,10 +249,10 @@ export const WorkflowCanvas: React.FC = () => {
       >
         <Background color="#e5e7eb" gap={16} />
         <Controls className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-lg" />
-        <MiniMap style={minimapStyle} className="bg-white dark:bg-gray-800 border-gray-700" zoomable pannable />
-      />
-      <Controls />
-      <MiniMap style={minimapStyle} />
+        <MiniMap style={minimapStyle} className="bg-white dark:bg-gray-800" zoomable pannable />
+      </ReactFlow>
     </motion.div>
   );
 };
+
+export default WorkflowCanvas;
