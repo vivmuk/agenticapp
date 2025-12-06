@@ -419,7 +419,11 @@ export class WorkflowManager {
       humanReviewProvided: dbWorkflow.humanReviewProvided,
       humanReviewFeedback: dbWorkflow.humanReviewFeedback,
       currentContent: latestContentVersion?.content,
-      agentStatus: dbWorkflow.agentStatus ? (dbWorkflow.agentStatus as Record<string, any>) : {},
+      agentStatus: {
+        [AgentType.CONTENT_GENERATOR]: (dbWorkflow.agentStatus as any)?.[AgentType.CONTENT_GENERATOR] || { status: 'idle' },
+        [AgentType.WEB_SEARCH_CRITIC]: (dbWorkflow.agentStatus as any)?.[AgentType.WEB_SEARCH_CRITIC] || { status: 'idle' },
+        [AgentType.QUALITY_CRITIC]: (dbWorkflow.agentStatus as any)?.[AgentType.QUALITY_CRITIC] || { status: 'idle' },
+      },
       startedAt: dbWorkflow.startedAt,
       completedAt: dbWorkflow.completedAt,
     };

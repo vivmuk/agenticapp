@@ -52,7 +52,9 @@ export interface VeniceChatRequest {
     enable_web_search?: 'on' | 'off' | 'auto';
     enable_web_citations?: boolean;
     include_venice_system_prompt?: boolean;
+    strip_thinking_response?: boolean;
   };
+  max_tokens?: number;
 }
 
 export interface VeniceChatResponse {
@@ -171,7 +173,11 @@ export class VeniceAPIClient {
     prompt: string,
     schema: z.ZodSchema<T>,
     systemPrompt?: string,
-    tools?: VeniceTool[]
+    tools?: VeniceTool[],
+    options?: {
+      max_tokens?: number;
+      venice_parameters?: VeniceChatRequest['venice_parameters'];
+    }
   ): Promise<T> {
     const messages: VeniceMessage[] = [];
     if (systemPrompt) {
@@ -203,6 +209,8 @@ export class VeniceAPIClient {
         },
       },
       tools,
+      max_tokens: options?.max_tokens,
+      venice_parameters: options?.venice_parameters,
     };
 
     logger.debug('Sending structured request', {
@@ -351,6 +359,7 @@ Include the most relevant search results with accurate titles, URLs, and snippet
         venice_parameters: {
           enable_web_search: 'on',
           enable_web_citations: true,
+          strip_thinking_response: true,
         },
       };
 

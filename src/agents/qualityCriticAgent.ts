@@ -5,67 +5,72 @@ import logger from '../utils/logger';
 import { z } from 'zod';
 
 export class QualityCriticAgent extends AgentBase<QualityCritiqueInput, QualityCritique> {
- constructor(veniceClient: VeniceAPIClient) {
- super(AgentType.QUALITY_CRITIC, veniceClient);
- }
+  constructor(veniceClient: VeniceAPIClient) {
+    super(AgentType.QUALITY_CRITIC, veniceClient);
+  }
 
- async execute(input: QualityCritiqueInput, workflowState: WorkflowState): Promise<QualityCritique> {
- logger.info('QualityCriticAgent starting execution', {
- cycleNumber: input.cycleNumber,
- hasAccuracyCritique: !!input.accuracyCritique,
- });
+  async execute(input: QualityCritiqueInput, workflowState: WorkflowState): Promise<QualityCritique> {
+    logger.info('QualityCriticAgent starting execution', {
+      cycleNumber: input.cycleNumber,
+      hasAccuracyCritique: !!input.accuracyCritique,
+    });
 
- try {
- const { result, executionTime } = await this.measureExecutionTime(async () => {
- const qualityCritique = await this.evaluateQuality(input);
- return qualityCritique;
- });
+    try {
+      const { result, executionTime } = await this.measureExecutionTime(async () => {
+        const qualityCritique = await this.evaluateQuality(input);
+        return qualityCritique;
+      });
 
- await this.logAgentExecution(
- workflowState.id,
- input.cycleNumber,
- input,
- result,
- executionTime
- );
+      await this.logAgentExecution(
+        workflowState.id,
+        input.cycleNumber,
+        input,
+        result,
+        executionTime
+      );
 
- logger.info('QualityCriticAgent completed successfully', {
- cycleNumber: input.cycleNumber,
- overallScore: result.overallScore,
- finalRecommendation: result.finalRecommendation,
- improvementCount: result.improvements.length,
- });
+      logger.info('QualityCriticAgent completed successfully', {
+        cycleNumber: input.cycleNumber,
+        overallScore: result.overallScore,
+        finalRecommendation: result.finalRecommendation,
+        improvementCount: result.improvements.length,
+      });
 
- return result;
- } catch (error) {
- this.handleError(error as Error, 'execute');
- }
- }
+      return result;
+    } catch (error) {
+      this.handleError(error as Error, 'execute');
+    }
+  }
 
- private async evaluateQuality(input: QualityCritiqueInput): Promise<QualityCritique> {
- const evaluationPrompt = this.buildEvaluationPrompt(input);
- const systemPrompt = this.buildSystemPrompt();
+  private async evaluateQuality(input: QualityCritiqueInput): Promise<QualityCritique> {
+    const evaluationPrompt = this.buildEvaluationPrompt(input);
+    const systemPrompt = this.buildSystemPrompt();
 
- const schema = z.object({
- overallScore: z.number().min(0).max(100),
- coherenceScore: z.number().min(0).max(100),
- engagementScore: z.number().min(0).max(100),
- accuracyScore: z.number().min(0).max(100),
- improvements: z.array(z.object({
- type: z.string(),
- severity: z.string(),
- description: z.string(),
- suggestion: z.string(),
- })),
- finalRecommendation: z.enum(['accept', 'improve', 'reject']),
- reasoning: z.string(),
- });
+    const schema = z.object({
+      overallScore: z.number().min(0).max(100),
+      coherenceScore: z.number().min(0).max(100),
+      engagementScore: z.number().min(0).max(100),
+      accuracyScore: z.number().min(0).max(100),
+      improvements: z.array(z.object({
+        type: z.string(),
+        severity: z.string(),
+        description: z.string(),
+        suggestion: z.string(),
+      })),
+      finalRecommendation: z.enum(['accept', 'improve', 'reject']),
+      reasoning: z.string(),
+    });
 
     try {
       const evaluation = await this.veniceClient.generateWithSchema(
         evaluationPrompt,
         schema,
-        systemPrompt
+        systemPrompt,
+        undefined,
+        {
+          max_tokens: 4096,
+          venice_parameters: { strip_thinking_response: true }
+        }
       );
 
       const toNumber = (value: any, fallback: number) => (
@@ -95,14 +100,14 @@ export class QualityCriticAgent extends AgentBase<QualityCritiqueInput, QualityC
         error: (error as Error).message,
       });
 
- return this.getFallbackEvaluation(input);
- }
- }
+      return this.getFallbackEvaluation(input);
+    }
+  }
 
- private buildEvaluationPrompt(input: QualityCritiqueInput): string {
- const { content, accuracyCritique, cycleNumber } = input;
+  private buildEvaluationPrompt(input: QualityCritiqueInput): string {
+    const { content, accuracyCritique, cycleNumber } = input;
 
- let prompt = `Evaluate the quality of the following content for a professional LinkedIn audience:
+    let prompt = `Evaluate the quality of the following content for a professional LinkedIn audience:
 
  CONTENT TO EVALUATE:
  Definition: ${content.definition}
@@ -111,17 +116,17 @@ export class QualityCriticAgent extends AgentBase<QualityCritiqueInput, QualityC
  Key Claims: ${content.keyClaims.join('; ')}
  `;
 
- if (accuracyCritique) {
- prompt += `
+    if (accuracyCritique) {
+      prompt += `
  ACCURACY ANALYSIS:
  Accuracy Score: ${accuracyCritique.accuracyScore}%
  Verified Claims: ${accuracyCritique.verifiedClaims.length}
  Disputed Claims: ${accuracyCritique.disputedClaims.length}
  Recommendations: ${accuracyCritique.recommendations.join('; ')}
  `;
- }
+    }
 
- prompt += `
+    prompt += `
  EVALUATION CRITERIA:
  1. Coherence (0-100): Logical flow, clarity, consistency
  2. Engagement (0-100): Professional appeal, LinkedIn suitability
@@ -131,75 +136,75 @@ export class QualityCriticAgent extends AgentBase<QualityCritiqueInput, QualityC
  Final recommendation should be: 'accept' (80+), 'improve' (60-79), or 'reject' (<60).
  Cycle ${cycleNumber} - focus on constructive feedback for improvement.`;
 
- return prompt;
- }
+    return prompt;
+  }
 
- private buildSystemPrompt(): string {
- return `You are a professional content quality evaluator specializing in LinkedIn business content. Your expertise includes:
+  private buildSystemPrompt(): string {
+    return `You are a professional content quality evaluator specializing in LinkedIn business content. Your expertise includes:
 
  - Professional writing standards
  - LinkedIn platform best practices
  - Content quality assessment
  - Constructive feedback generation
  Provide detailed, actionable feedback that helps improve content quality. Be specific but encouraging in your recommendations.`;
- }
+  }
 
- private getFallbackEvaluation(input: QualityCritiqueInput): QualityCritique {
- logger.warn('Using fallback quality evaluation');
+  private getFallbackEvaluation(input: QualityCritiqueInput): QualityCritique {
+    logger.warn('Using fallback quality evaluation');
 
- const accuracyScore = input.accuracyCritique?.accuracyScore || 75;
- const coherenceScore = 70;
- const engagementScore = 75;
- const overallScore = Math.round((accuracyScore + coherenceScore + engagementScore) / 3);
+    const accuracyScore = input.accuracyCritique?.accuracyScore || 75;
+    const coherenceScore = 70;
+    const engagementScore = 75;
+    const overallScore = Math.round((accuracyScore + coherenceScore + engagementScore) / 3);
 
- let finalRecommendation: 'accept' | 'improve' | 'reject';
- if (overallScore >= 80) {
- finalRecommendation = 'accept';
- } else if (overallScore >= 60) {
- finalRecommendation = 'improve';
- } else {
- finalRecommendation = 'reject';
- }
+    let finalRecommendation: 'accept' | 'improve' | 'reject';
+    if (overallScore >= 80) {
+      finalRecommendation = 'accept';
+    } else if (overallScore >= 60) {
+      finalRecommendation = 'improve';
+    } else {
+      finalRecommendation = 'reject';
+    }
 
- const improvements: Improvement[] = [];
+    const improvements: Improvement[] = [];
 
- if (coherenceScore < 80) {
- improvements.push({
- type: 'general',
- severity: 'medium',
- description: 'Content coherence could be improved',
- suggestion: 'Review logical flow and transitions between ideas',
- });
- }
+    if (coherenceScore < 80) {
+      improvements.push({
+        type: 'general',
+        severity: 'medium',
+        description: 'Content coherence could be improved',
+        suggestion: 'Review logical flow and transitions between ideas',
+      });
+    }
 
- if (engagementScore < 80) {
- improvements.push({
- type: 'linkedinPost',
- severity: 'medium',
- description: 'LinkedIn post needs more engagement',
- suggestion: 'Add hooks, questions, or calls-to-action to increase engagement',
- });
- }
+    if (engagementScore < 80) {
+      improvements.push({
+        type: 'linkedinPost',
+        severity: 'medium',
+        description: 'LinkedIn post needs more engagement',
+        suggestion: 'Add hooks, questions, or calls-to-action to increase engagement',
+      });
+    }
 
- if (accuracyScore < 80) {
- improvements.push({
- type: 'general',
- severity: 'high',
- description: 'Accuracy issues detected',
- suggestion: 'Review and verify factual claims with reliable sources',
- });
- }
+    if (accuracyScore < 80) {
+      improvements.push({
+        type: 'general',
+        severity: 'high',
+        description: 'Accuracy issues detected',
+        suggestion: 'Review and verify factual claims with reliable sources',
+      });
+    }
 
- return {
- overallScore,
- coherenceScore,
- engagementScore,
- accuracyScore,
- improvements,
- finalRecommendation,
- reasoning: `Fallback evaluation due to processing error. Overall quality score: ${overallScore}/100.`,
- };
- }
+    return {
+      overallScore,
+      coherenceScore,
+      engagementScore,
+      accuracyScore,
+      improvements,
+      finalRecommendation,
+      reasoning: `Fallback evaluation due to processing error. Overall quality score: ${overallScore}/100.`,
+    };
+  }
 }
 
 export default QualityCriticAgent;

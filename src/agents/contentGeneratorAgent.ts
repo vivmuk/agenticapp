@@ -24,7 +24,12 @@ export class ContentGeneratorAgent extends AgentBase<ContentGenerationInput, Con
         let structuredResponse = await this.veniceClient.generateWithSchema(
           prompt,
           this.getContentGenerationSchema(),
-          systemPrompt
+          systemPrompt,
+          undefined,
+          {
+            max_tokens: 4096,
+            venice_parameters: { strip_thinking_response: true }
+          }
         );
 
         structuredResponse = this.normalizeContentFields(structuredResponse);
