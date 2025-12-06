@@ -1,3 +1,5 @@
+import dotenv from 'dotenv'; dotenv.config();
+
 // Immediate startup log (before any imports that might fail)
 console.log('[STARTUP] Backend starting...');
 console.log('[STARTUP] Node version:', process.version);
@@ -7,7 +9,6 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import { PrismaClient } from '@prisma/client';
-import dotenv from 'dotenv';
 
 console.log('[STARTUP] Imports completed');
 
@@ -15,9 +16,6 @@ import workflowsRouter from './routes/workflows';
 import logger from './utils/logger';
 
 console.log('[STARTUP] Routes and logger imported');
-
-// Load environment variables
-dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -135,7 +133,7 @@ process.on('SIGINT', async () => {
 // Start server
 const startServer = async () => {
   console.log('[STARTUP] Starting server...');
-  
+
   try {
     console.log('[STARTUP] Connecting to database...');
     await prisma.$connect();

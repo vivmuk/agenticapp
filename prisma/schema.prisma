@@ -4,150 +4,150 @@ generator client {
 
 datasource db {
   provider = "mongodb"
-  url = env("DATABASE_URL")
+  url      = env("DATABASE_URL")
 }
 
 model WorkflowRun {
-  id String @id @default(cuid()) @db.ObjectId @map("_id")
-  topic String
-  status WorkflowStatus @default(INITIALIZING)
-  currentCycle Int @default(1)
-  maxCycles Int @default(3)
-  qualityThreshold Float @default(7.0)
-  finalQualityScore Float?
-  humanReviewRequired Boolean @default(false)
-  humanReviewProvided Boolean @default(false)
-  humanReviewFeedback String?
-  startedAt DateTime @default(now())
-  completedAt DateTime?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                    String    @id @default(cuid()) @map("_id")
+  topic                 String
+  status                WorkflowStatus @default(INITIALIZING)
+  currentCycle          Int       @default(1)
+  maxCycles             Int       @default(3)
+  qualityThreshold      Float     @default(7.0)
+  finalQualityScore     Float?
+  humanReviewRequired   Boolean   @default(false)
+  humanReviewProvided   Boolean   @default(false)
+  humanReviewFeedback   String?
+  startedAt             DateTime  @default(now())
+  completedAt           DateTime?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
 
-  contentVersions ContentVersion[]
-  agentResponses AgentResponse[]
-  humanReviews HumanReview[]
-  reviewQueue ReviewQueue?
+  contentVersions       ContentVersion[]
+  agentResponses        AgentResponse[]
+  humanReviews          HumanReview[]
+  reviewQueue           ReviewQueue?
 
   @@map("workflow_runs")
 }
 
 model ContentVersion {
-  id String @id @default(cuid()) @db.ObjectId @map("_id")
-  workflowRunId String @db.ObjectId
-  cycleNumber Int
-  versionType VersionType
-  content Json
-  imageUrl String?
-  metadata Json?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id            String    @id @default(cuid()) @map("_id")
+  workflowRunId String
+  cycleNumber   Int
+  versionType   VersionType
+  content       Json
+  imageUrl      String?
+  metadata      Json?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
-  workflowRun WorkflowRun @relation(fields: [workflowRunId], references: [id], onDelete: Cascade)
+  workflowRun   WorkflowRun @relation(fields: [workflowRunId], references: [id], onDelete: Cascade)
 
   @@map("content_versions")
   @@unique([workflowRunId, cycleNumber], name: "workflowRunId_cycleNumber")
 }
 
 model AgentResponse {
-  id String @id @default(cuid()) @db.ObjectId @map("_id")
-  workflowRunId String @db.ObjectId
-  agentType AgentType
-  cycleNumber Int
-  input Json?
-  output Json
-  success Boolean @default(true)
-  errorMessage String?
+  id            String    @id @default(cuid()) @map("_id")
+  workflowRunId String
+  agentType     AgentType
+  cycleNumber   Int
+  input         Json?
+  output        Json
+  success       Boolean   @default(true)
+  errorMessage  String?
   executionTime Int?
-  tokensUsed Int?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  tokensUsed    Int?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
-  workflowRun WorkflowRun @relation(fields: [workflowRunId], references: [id], onDelete: Cascade)
+  workflowRun   WorkflowRun @relation(fields: [workflowRunId], references: [id], onDelete: Cascade)
 
   @@map("agent_responses")
 }
 
 model HumanReview {
-  id String @id @default(cuid()) @db.ObjectId @map("_id")
-  workflowRunId String @db.ObjectId
-  reviewerId String?
-  reviewerName String?
-  status HumanReviewStatus @default(PENDING)
-  priority ReviewPriority @default(MEDIUM)
-  triggerReason TriggerReason
-  action ReviewAction?
-  feedback String?
-  customEdits Json?
-  qualityRating Int?
-  feedbackCategories Json?
-  reviewStartTime DateTime?
-  reviewCompletionTime DateTime?
-  estimatedReviewTime Int?
-  timeSpent Int?
-  dueDate DateTime?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                    String    @id @default(cuid()) @map("_id")
+  workflowRunId         String
+  reviewerId            String?
+  reviewerName          String?
+  status                HumanReviewStatus @default(PENDING)
+  priority              ReviewPriority @default(MEDIUM)
+  triggerReason         TriggerReason
+  action                ReviewAction?
+  feedback              String?
+  customEdits           Json?
+  qualityRating         Int?
+  feedbackCategories    Json?
+  reviewStartTime       DateTime?
+  reviewCompletionTime  DateTime?
+  estimatedReviewTime   Int?
+  timeSpent             Int?
+  dueDate               DateTime?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
 
-  workflowRun WorkflowRun @relation(fields: [workflowRunId], references: [id], onDelete: Cascade)
-  reviewComments ReviewComment[]
+  workflowRun           WorkflowRun @relation(fields: [workflowRunId], references: [id], onDelete: Cascade)
+  reviewComments        ReviewComment[]
 
   @@map("human_reviews")
   @@unique([workflowRunId])
 }
 
 model ReviewComment {
-  id String @id @default(cuid()) @db.ObjectId @map("_id")
-  humanReviewId String @db.ObjectId
-  contentType CommentContentType
-  text String
-  selection Json?
-  type CommentType
-  author String
-  timestamp DateTime @default(now())
-  resolved Boolean @default(false)
-  parentId String? @db.ObjectId
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id            String    @id @default(cuid()) @map("_id")
+  humanReviewId String
+  contentType   CommentContentType
+  text          String
+  selection     Json?
+  type          CommentType
+  author        String
+  timestamp     DateTime  @default(now())
+  resolved      Boolean   @default(false)
+  parentId      String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
-  humanReview HumanReview @relation(fields: [humanReviewId], references: [id], onDelete: Cascade)
+  humanReview   HumanReview @relation(fields: [humanReviewId], references: [id], onDelete: Cascade)
 
   @@map("review_comments")
 }
 
 model ReviewMetrics {
-  id String @id @default(cuid()) @db.ObjectId @map("_id")
-  reviewerId String
-  reviewerName String
-  totalReviews Int @default(0)
-  averageReviewTime Float @default(0)
-  averageQualityImprovement Float @default(0)
-  decisionBreakdown Json?
-  categoryBreakdown Json?
-  lastReviewDate DateTime?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                      String    @id @default(cuid()) @map("_id")
+  reviewerId              String
+  reviewerName            String
+  totalReviews            Int       @default(0)
+  averageReviewTime       Float     @default(0)
+  averageQualityImprovement Float   @default(0)
+  decisionBreakdown       Json?
+  categoryBreakdown       Json?
+  lastReviewDate          DateTime?
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
 
   @@unique([reviewerId])
   @@map("review_metrics")
 }
 
 model ReviewQueue {
-  id String @id @default(cuid()) @db.ObjectId @map("_id")
-  workflowRunId String @db.ObjectId
-  topic String
-  priority ReviewPriority
-  triggerReason TriggerReason
-  currentCycle Int
-  maxCycles Int
-  qualityScore Float
+  id              String    @id @default(cuid()) @map("_id")
+  workflowRunId   String
+  topic           String
+  priority        ReviewPriority
+  triggerReason   TriggerReason
+  currentCycle    Int
+  maxCycles       Int
+  qualityScore    Float
   estimatedReviewTime Int?
-  assignedTo String?
-  timeInQueue Int @default(0)
-  dueDate DateTime?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  assignedTo      String?
+  timeInQueue     Int       @default(0)
+  dueDate         DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
-  workflowRun WorkflowRun @relation(fields: [workflowRunId], references: [id], onDelete: Cascade)
+  workflowRun     WorkflowRun @relation(fields: [workflowRunId], references: [id], onDelete: Cascade)
 
   @@map("review_queue")
   @@unique([workflowRunId])
