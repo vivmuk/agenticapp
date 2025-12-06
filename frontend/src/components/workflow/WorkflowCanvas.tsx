@@ -193,7 +193,7 @@ export const WorkflowCanvas: React.FC = () => {
   const { currentWorkflow, setCurrentWorkflow, setSelectedNode } = useWorkflowStore();
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
-  const [pollingInterval, setPollingInterval] = useState<NodeJS.Timeout | null>(null);
+  const [pollingInterval, setPollingInterval] = useState<ReturnType<typeof setInterval> | null>(null);
 
   // Connect handler
   const onConnect = useCallback((params: Connection) => {
@@ -204,13 +204,14 @@ export const WorkflowCanvas: React.FC = () => {
   const pollWorkflowStatus = useCallback(async (workflowId: string) => {
     try {
       const response = await workflowService.getWorkflow(workflowId);
-      if (response.success && response.data) {
-        setCurrentWorkflow(response.data as any);
+      if (response.success && response.data?.workflow) {
+        const workflow = response.data.workflow;
+        setCurrentWorkflow(workflow as any);
         
         // Stop polling if workflow is completed or failed
         if (
-          response.data.status === WorkflowStatus.COMPLETED ||
-          response.data.status === WorkflowStatus.FAILED
+          workflow.status === WorkflowStatus.COMPLETED ||
+          workflow.status === WorkflowStatus.FAILED
         ) {
           if (pollingInterval) {
             clearInterval(pollingInterval);

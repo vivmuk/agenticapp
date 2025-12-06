@@ -156,6 +156,9 @@ export interface Workflow {
   status: WorkflowStatus;
   currentCycle: number;
   maxCycles: number;
+  // Added to align with UI expectations
+  topic: string;
+  currentContent?: string;
   agentStatus: Record<AgentType, AgentStatus>;
   contentVersions: ContentVersion[];
   humanReviewRequired: boolean;
@@ -172,8 +175,11 @@ export interface Workflow {
 }
 
 export interface WorkflowStartInput {
-  definition: string;
+  // Topic to generate content for
+  topic: string;
+  // Optional controls
   maxCycles?: number;
+  qualityThreshold?: number;
   enableHumanReview?: boolean;
   metadata?: Record<string, any>;
 }
