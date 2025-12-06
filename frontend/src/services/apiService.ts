@@ -32,7 +32,11 @@ const api = axios.create({
 // Add request interceptor to log requests
 api.interceptors.request.use(
   (config) => {
-    console.log('[API] Request:', config.method?.toUpperCase(), config.url, '→', config.baseURL + config.url);
+    const method = config.method?.toUpperCase() || 'GET';
+    const url = config.url || '';
+    const baseURL = config.baseURL || '';
+    const fullUrl = baseURL && url ? `${baseURL}${url}` : url || baseURL;
+    console.log('[API] Request:', method, url, '→', fullUrl);
     return config;
   },
   (error) => {
