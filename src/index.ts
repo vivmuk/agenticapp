@@ -13,6 +13,7 @@ import { PrismaClient } from '@prisma/client';
 console.log('[STARTUP] Imports completed');
 
 import workflowsRouter from './routes/workflows';
+import humanReviewRouter from './routes/humanReview';
 import logger from './utils/logger';
 
 console.log('[STARTUP] Routes and logger imported');
@@ -57,6 +58,7 @@ app.use('/api/workflows', (req, res, next) => {
   logger.info('Workflow route hit', { method: req.method, path: req.path, url: req.url, originalUrl: req.originalUrl });
   next();
 }, workflowsRouter);
+app.use('/api/human-review', humanReviewRouter);
 
 // Health check endpoint
 app.get('/health', (req, res) => {

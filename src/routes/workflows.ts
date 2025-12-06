@@ -72,11 +72,11 @@ router.post('/start', async (req, res) => {
       maxCycles,
       qualityThreshold,
       model,
-    });
+    }, { runAsync: true });
 
     logger.info('Workflow started successfully', { workflowId: workflowState.id });
 
-    res.status(201).json({
+    res.status(202).json({
       success: true,
       data: {
         workflowId: workflowState.id,

@@ -31,7 +31,7 @@ export class WorkflowManager {
     this.qualityCritic = new QualityCriticAgent(veniceClient);
   }
 
-  async startWorkflow(input: WorkflowStartInput): Promise<WorkflowState> {
+  async startWorkflow(input: WorkflowStartInput, options?: { runAsync?: boolean }): Promise<WorkflowState> {
     logger.info('Starting new workflow', { topic: input.topic, maxCycles: input.maxCycles });
 
     // Convert qualityThreshold from 0-1 scale to 0-10 scale for database
@@ -72,6 +72,20 @@ export class WorkflowManager {
     };
 
     try {
+      if (options?.runAsync) {
+        // Fire-and-forget execution so the caller can return immediately
+        this.executeWorkflowCycle({ ...workflowState })
+          .catch(async (error) => {
+            logger.error('Async workflow execution failed', {
+              workflowId: workflowState.id,
+              error: (error as Error).message,
+            });
+            workflowState.status = WorkflowStatus.FAILED;
+            await this.saveWorkflowState(workflowState);
+          });
+        return workflowState;
+      }
+
       const finalState = await this.executeWorkflowCycle(workflowState);
       return finalState;
     } catch (error) {

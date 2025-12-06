@@ -7,6 +7,7 @@ type ViewMode = 'create' | 'orchestration' | 'review';
 
 function App() {
   const [activeView, setActiveView] = useState<ViewMode>('create');
+  const [activeWorkflowId, setActiveWorkflowId] = useState<string | null>(null);
 
   return (
     <div className="min-h-screen bg-white">
@@ -57,35 +58,40 @@ function App() {
       <main className="max-w-7xl mx-auto px-8 py-10 grid-bg min-h-[calc(100vh-300px)]">
         {activeView === 'create' && (
           <div className="max-w-3xl">
-            <WorkflowStartForm onWorkflowStarted={() => setActiveView('orchestration')} />
+            <WorkflowStartForm onWorkflowStarted={(workflowId) => {
+              setActiveWorkflowId(workflowId);
+              setActiveView('orchestration');
+            }} />
           </div>
         )}
 
         {activeView === 'orchestration' && (
           <div className="space-y-6">
-            {/* Configuration Panel */}
-            <div className="bg-gradient-to-br from-gray-800 via-gray-700 to-purple-900 rounded-xl p-8 shadow-xl">
-              <div className="flex items-center justify-between mb-6">
+            <div className="bg-white border-2 border-gray-200 rounded-xl p-6 shadow-sm">
+              <div className="flex items-center justify-between mb-2">
                 <div>
-                  <h2 className="text-xl font-bold text-white uppercase tracking-wide">Agent Orchestration</h2>
-                  <p className="text-gray-300 text-sm mt-1">Watch your content being created and refined</p>
+                  <h2 className="text-xl font-bold text-gray-900 uppercase tracking-wide">Agent Orchestration</h2>
+                  <p className="text-gray-600 text-sm mt-1">
+                    Live view of each agent step. Start a post from the Create tab; runs appear here in real time.
+                  </p>
                 </div>
                 <button
-                  onClick={() => setActiveView('create')}
-                  className="px-4 py-2 bg-white text-gray-900 font-bold uppercase tracking-wide rounded-lg hover:bg-gray-100 transition-all text-sm"
+                  onClick={() => {
+                    setActiveWorkflowId(null);
+                    setActiveView('create');
+                  }}
+                  className="px-4 py-2 bg-gray-900 text-white font-bold uppercase tracking-wide rounded-lg hover:bg-gray-800 transition-all text-sm"
                 >
                   + New Post
                 </button>
               </div>
-              <WorkflowStartForm onWorkflowStarted={(workflowId) => {
-                // Workflow started, canvas will show the workflow
-                console.log('Workflow started:', workflowId);
-              }} />
+              <div className="text-sm text-gray-600">
+                When a workflow is running you’ll see agent messages, content drafts, and images in the canvas below.
+              </div>
             </div>
-            
-            {/* Workflow Canvas */}
+
             <div className="bg-white border-2 border-gray-200 rounded-xl shadow-sm h-[600px]">
-              <WorkflowCanvas />
+              <WorkflowCanvas workflowId={activeWorkflowId} allowInlineStart={false} />
             </div>
           </div>
         )}

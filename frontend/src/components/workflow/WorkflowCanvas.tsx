@@ -189,7 +189,12 @@ const generateWorkflowLayout = (workflowState: any): { nodes: Node[]; edges: Edg
   return { nodes, edges };
 };
 
-export const WorkflowCanvas: React.FC = () => {
+interface WorkflowCanvasProps {
+  workflowId?: string | null;
+  allowInlineStart?: boolean;
+}
+
+export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({ workflowId, allowInlineStart = true }) => {
   const { currentWorkflow, setCurrentWorkflow, setSelectedNode } = useWorkflowStore();
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
@@ -204,8 +209,11 @@ export const WorkflowCanvas: React.FC = () => {
   const pollWorkflowStatus = useCallback(async (workflowId: string) => {
     try {
       const response = await workflowService.getWorkflow(workflowId);
-      if (response.success && response.data?.workflow) {
-        const workflow = response.data.workflow;
+      if (response.success && response.data) {
+        const workflow = {
+          id: (response.data as any).workflowId || (response.data as any).id || workflowId,
+          ...response.data,
+        };
         setCurrentWorkflow(workflow as any);
         
         // Stop polling if workflow is completed or failed
@@ -226,6 +234,10 @@ export const WorkflowCanvas: React.FC = () => {
 
   // Handle workflow started
   const handleWorkflowStarted = useCallback((workflowId: string) => {
+    if (pollingInterval) {
+      clearInterval(pollingInterval);
+      setPollingInterval(null);
+    }
     // Start polling for updates
     const interval = setInterval(() => {
       pollWorkflowStatus(workflowId);
@@ -235,6 +247,13 @@ export const WorkflowCanvas: React.FC = () => {
     // Initial poll
     pollWorkflowStatus(workflowId);
   }, [pollWorkflowStatus]);
+
+  // Auto-start polling when parent provides a workflowId
+  useEffect(() => {
+    if (workflowId) {
+      handleWorkflowStarted(workflowId);
+    }
+  }, [workflowId, handleWorkflowStarted]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -270,8 +289,18 @@ export const WorkflowCanvas: React.FC = () => {
     }
   };
 
-  // If no workflow, show the start form
+  // If no workflow, show the start form or an empty state
   if (!currentWorkflow) {
+    if (!allowInlineStart) {
+      return (
+        <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-900 via-purple-900/20 to-slate-900 text-white gap-3 px-8">
+          <h3 className="text-lg font-semibold">No workflow running</h3>
+          <p className="text-sm text-gray-300 text-center max-w-md">
+            Start a new post from the Create tab to see live agent activity, content drafts, and images appear here.
+          </p>
+        </div>
+      );
+    }
     return (
       <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-900 via-purple-900/20 to-slate-900 p-8">
         <WorkflowStartForm onWorkflowStarted={handleWorkflowStarted} />
