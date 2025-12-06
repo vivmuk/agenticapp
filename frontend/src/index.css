@@ -1,1 +1,238 @@
- @tailwind base; @tailwind components; @tailwind utilities; @layer base { :root { --background: 0 0% 100%; --foreground: 222.2 84% 4.9%; --card: 0 0% 100%; --card-foreground: 222.2 84% 4.9%; --popover: 0 0% 100%; --popover-foreground: 222.2 84% 4.9%; --primary: 221.2 83.2% 53.3%; --primary-foreground: 210 40% 98%; --secondary: 210 40% 96%; --secondary-foreground: 222.2 84% 4.9%; --muted: 210 40% 96%; --muted-foreground: 215.4 16.3% 46.9%; --accent: 210 40% 96%; --accent-foreground: 222.2 84% 4.9%; --destructive: 0 84.2% 60.2%; --destructive-foreground: 210 40% 98%; --border: 214.3 31.8% 91.4%; --input: 214.3 31.8% 91.4%; --ring: 221.2 83.2% 53.3%; --radius: 0.5rem; } .dark { --background: 222.2 84% 4.9%; --foreground: 210 40% 98%; --card: 222.2 84% 4.9%; --card-foreground: 210 40% 98%; --popover: 222.2 84% 4.9%; --popover-foreground: 210 40% 98%; --primary: 217.2 91.2% 59.8%; --primary-foreground: 222.2 84% 4.9%; --secondary: 217.2 32.6% 17.5%; --secondary-foreground: 210 40% 98%; --muted: 217.2 32.6% 17.5%; --muted-foreground: 215 20.2% 65.1%; --accent: 217.2 32.6% 17.5%; --accent-foreground: 210 40% 98%; --destructive: 0 62.8% 30.6%; --destructive-foreground: 210 40% 98%; --border: 217.2 32.6% 17.5%; --input: 217.2 32.6% 17.5%; --ring: 224.3 76.3% 94.1%; } } @layer base { * { @apply border-border; } body { @apply bg-background text-foreground; } } @layer components { .react-flow__node { @apply transition-all duration-300 ease-in-out; } .react-flow__edge-path { @apply transition-all duration-500 ease-in-out; } .agent-node { @apply rounded-lg shadow-lg border-2 transition-all duration-300; } .agent-node.running { @apply animate-pulse-slow; } .agent-node.completed { @apply shadow-md; } .agent-node.error { @apply border-red-500 shadow-red-200; } .workflow-canvas { @apply bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800; } .status-badge { @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium; } .status-badge.idle { @apply bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200; } .status-badge.running { @apply bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 animate-pulse; } .status-badge.completed { @apply bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200; } .status-badge.error { @apply bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200; } .content-preview { @apply bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 p-6; } .metric-card { @apply bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 p-4; } .activity-feed { @apply space-y-3 max-h-96 overflow-y-auto; } .activity-item { @apply flex items-start space-x-3 p-3 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700; } .quality-score { @apply text-2xl font-bold; } .quality-score.high { @apply text-green-600 dark:text-green-400; } .quality-score.medium { @apply text-yellow-600 dark:text-yellow-400; } .quality-score.low { @apply text-red-600 dark:text-red-400; } } @layer utilities { .text-balance { text-wrap: balance; } .scrollbar-thin { scrollbar-width: thin; scrollbar-color: rgb(156 163 175) transparent; } .scrollbar-thin::-webkit-scrollbar { width: 6px; } .scrollbar-thin::-webkit-scrollbar-track { background: transparent; } .scrollbar-thin::-webkit-scrollbar-thumb { background-color: rgb(156 163 175); border-radius: 3px; } .scrollbar-thin::-webkit-scrollbar-thumb:hover { background-color: rgb(107 114 128); } } 
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 270 91% 65%;
+    --primary-foreground: 222.2 84% 4.9%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 270 91% 65%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 50%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 270 91% 65%;
+    --radius: 0.75rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  
+  html {
+    @apply bg-slate-950;
+  }
+  
+  body {
+    @apply bg-slate-950 text-slate-100 antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  /* Custom selection */
+  ::selection {
+    @apply bg-purple-500/30 text-white;
+  }
+}
+
+@layer components {
+  /* React Flow customization */
+  .react-flow__node {
+    @apply transition-all duration-300 ease-in-out;
+  }
+
+  .react-flow__edge-path {
+    @apply transition-all duration-500 ease-in-out;
+  }
+
+  .react-flow__attribution {
+    @apply hidden;
+  }
+
+  .react-flow__background {
+    @apply opacity-20;
+  }
+
+  /* Agent nodes */
+  .agent-node {
+    @apply rounded-xl shadow-lg border-2 transition-all duration-300;
+  }
+
+  .agent-node.running {
+    @apply shadow-purple-500/30;
+  }
+
+  /* Status badges */
+  .status-badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+
+  .status-badge.idle {
+    @apply bg-slate-700/50 text-slate-300 border border-slate-600;
+  }
+
+  .status-badge.running {
+    @apply bg-purple-900/50 text-purple-300 border border-purple-500/50 animate-pulse;
+  }
+
+  .status-badge.completed {
+    @apply bg-green-900/50 text-green-300 border border-green-500/50;
+  }
+
+  .status-badge.error {
+    @apply bg-red-900/50 text-red-300 border border-red-500/50;
+  }
+
+  /* Cards */
+  .glass-card {
+    @apply bg-slate-900/80 backdrop-blur-xl border border-purple-500/20 rounded-xl shadow-xl;
+  }
+
+  .metric-card {
+    @apply bg-slate-800/50 rounded-xl border border-slate-700 p-4;
+  }
+
+  /* Content preview */
+  .content-preview {
+    @apply bg-slate-800/50 rounded-xl border border-slate-700 p-6;
+  }
+
+  /* Activity feed */
+  .activity-feed {
+    @apply space-y-3 max-h-96 overflow-y-auto;
+  }
+
+  .activity-item {
+    @apply flex items-start space-x-3 p-3 rounded-lg bg-slate-800/50 border border-slate-700/50;
+  }
+
+  /* Quality score */
+  .quality-score {
+    @apply text-2xl font-bold;
+  }
+
+  .quality-score.high {
+    @apply text-green-400;
+  }
+
+  .quality-score.medium {
+    @apply text-yellow-400;
+  }
+
+  .quality-score.low {
+    @apply text-red-400;
+  }
+
+  /* Buttons */
+  .btn-primary {
+    @apply px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-medium rounded-lg 
+           hover:from-purple-500 hover:to-pink-500 transition-all shadow-lg shadow-purple-500/25;
+  }
+
+  .btn-secondary {
+    @apply px-4 py-2 bg-slate-800 text-slate-200 font-medium rounded-lg 
+           hover:bg-slate-700 transition-all border border-slate-700;
+  }
+
+  /* Input fields */
+  .input-field {
+    @apply w-full px-4 py-3 bg-slate-800/50 border border-purple-500/30 rounded-xl text-white 
+           placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500 
+           focus:border-transparent transition-all;
+  }
+
+  /* Glow effects */
+  .glow-purple {
+    box-shadow: 0 0 40px -10px rgba(168, 85, 247, 0.5);
+  }
+
+  .glow-pink {
+    box-shadow: 0 0 40px -10px rgba(236, 72, 153, 0.5);
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  /* Custom scrollbar */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(71 85 105) transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: rgb(71 85 105);
+    border-radius: 3px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background-color: rgb(100 116 139);
+  }
+
+  /* Animation utilities */
+  .animate-pulse-slow {
+    animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  .animate-gradient {
+    background-size: 200% 200%;
+    animation: gradient 3s ease infinite;
+  }
+
+  @keyframes gradient {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+
+  /* Backdrop blur fallback */
+  @supports not (backdrop-filter: blur(12px)) {
+    .backdrop-blur-xl {
+      background-color: rgba(15, 23, 42, 0.95);
+    }
+  }
+}
+
+/* Fix for React Flow controls in dark mode */
+.react-flow__controls button {
+  background-color: rgb(30 41 59) !important;
+  border-color: rgb(51 65 85) !important;
+  color: rgb(203 213 225) !important;
+}
+
+.react-flow__controls button:hover {
+  background-color: rgb(51 65 85) !important;
+}
+
+.react-flow__controls button svg {
+  fill: currentColor !important;
+}
+
+/* React Flow minimap */
+.react-flow__minimap {
+  background-color: rgb(15 23 42) !important;
+  border: 1px solid rgb(51 65 85) !important;
+  border-radius: 0.5rem;
+}

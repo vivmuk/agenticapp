@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useHumanReviewStore } from '@/stores/humanReviewStore';
 import { HumanReviewStatus, ReviewPriority, ReviewAction, ReviewQueueItem } from '@/types';
+import { apiFetch } from '@/services/apiService';
 import ContentDisplay from './ContentDisplay';
 import CritiqueSummary from './CritiqueSummary';
 import DecisionControls from './DecisionControls';
@@ -46,7 +47,7 @@ const HumanReviewPanel: React.FC<HumanReviewPanelProps> = ({ workflowId, onClose
     try {
       // Load current review if workflowId is provided
       if (workflowId) {
-        const reviewResponse = await fetch(`/api/workflows/${workflowId}`);
+        const reviewResponse = await apiFetch(`/api/workflows/${workflowId}`);
         if (reviewResponse.ok) {
           const reviewData = await reviewResponse.json();
           if (reviewData.data?.humanReview) {
@@ -55,7 +56,7 @@ const HumanReviewPanel: React.FC<HumanReviewPanelProps> = ({ workflowId, onClose
         }
 
         // Load review history for this workflow
-        const historyResponse = await fetch(`/api/human-review/${workflowId}/history`);
+        const historyResponse = await apiFetch(`/api/human-review/${workflowId}/history`);
         if (historyResponse.ok) {
           const historyData = await historyResponse.json();
           setReviewHistory(historyData.data?.reviewHistory || []);
@@ -65,7 +66,7 @@ const HumanReviewPanel: React.FC<HumanReviewPanelProps> = ({ workflowId, onClose
       }
 
       // Always load review queue
-      const queueResponse = await fetch('/api/human-review/queue');
+      const queueResponse = await apiFetch('/api/human-review/queue');
       if (queueResponse.ok) {
         const queueData = await queueResponse.json();
         setReviewQueue(queueData.data?.queue || []);
@@ -231,16 +232,17 @@ const HumanReviewPanel: React.FC<HumanReviewPanelProps> = ({ workflowId, onClose
         {/* Queue Sidebar */}
         {showQueue && (
           <div className="w-80 border-r border-gray-200 dark:border-gray-700 overflow-y-auto">
-            <ReviewQueue onReviewSelect={(queueItem: ReviewQueueItem) => {
+            <ReviewQueue onReviewSelect={async (queueItem: ReviewQueueItem) => {
               // Load the full review data when selecting from queue
-              fetch(`/api/workflows/${queueItem.workflowId}`)
-                .then(res => res.json())
-                .then(data => {
-                  if (data.data?.humanReview) {
-                    setCurrentReview(data.data.humanReview);
-                  }
-                })
-                .catch(err => console.error('Failed to load review:', err));
+              try {
+                const res = await apiFetch(`/api/workflows/${queueItem.workflowId}`);
+                const data = await res.json();
+                if (data.data?.humanReview) {
+                  setCurrentReview(data.data.humanReview);
+                }
+              } catch (err) {
+                console.error('Failed to load review:', err);
+              }
             }} />
           </div>
         )}

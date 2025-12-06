@@ -14,6 +14,7 @@ import {
   FeedbackCategory,
   CustomEdits
 } from '@/types';
+import { apiFetch } from '@/services/apiService';
 
 // Extended HumanReview interface for store state
 export interface HumanReviewWithComments extends HumanReview {
@@ -230,7 +231,7 @@ export const useHumanReviewStore = create<HumanReviewState>()(
 
       try {
         // API call would go here
-        const response = await fetch(`/api/workflows/${currentReview.workflowId}/human-review`, {
+        const response = await apiFetch(`/api/workflows/${currentReview.workflowId}/human-review`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
