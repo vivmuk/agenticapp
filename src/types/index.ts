@@ -3,6 +3,7 @@ export interface ContentGenerationInput {
   cycleNumber: number;
   previousFeedback?: string;
   previousContent?: ContentPackage;
+  maxCycles?: number;
 }
 
 export interface ContentPackage {
@@ -32,14 +33,14 @@ export interface Claim {
   statement: string;
   isVerified: boolean;
   confidence: number;
-  sources: string[];
+  sources: Source[];
 }
 
 export interface Source {
   title: string;
   url: string;
   snippet: string;
-  reliability: number;
+  reliability?: number;
 }
 
 export interface QualityCritiqueInput {

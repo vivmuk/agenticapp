@@ -8,7 +8,8 @@ import {
   AccuracyCritique,
   QualityCritique,
   WorkflowStartInput,
-  HumanReviewInput
+  HumanReviewInput,
+  ReviewAction
 } from '../types';
 import ContentGeneratorAgent from '../agents/contentGeneratorAgent';
 import WebSearchCriticAgent from '../agents/webSearchCriticAgent';
@@ -218,13 +219,15 @@ export class WorkflowManager {
     workflowState.humanReviewProvided = true;
     workflowState.humanReviewFeedback = review.feedback;
 
-    if (review.action === 'accept') {
+    const action = (review.action as unknown as string).toUpperCase() as ReviewAction;
+
+    if (action === ReviewAction.ACCEPT) {
       workflowState.status = WorkflowStatus.COMPLETED;
       workflowState.completedAt = new Date();
       await this.saveWorkflowState(workflowState);
 
       logger.info('Human review accepted - workflow completed', { workflowId });
-    } else if (review.action === 'improve' && workflowState.currentCycle < workflowState.maxCycles) {
+    } else if (action === ReviewAction.IMPROVE && workflowState.currentCycle < workflowState.maxCycles) {
       const feedback = review.feedback || 'Human feedback provided for improvement';
       const customEdits = review.customEdits;
 
