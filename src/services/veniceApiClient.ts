@@ -180,7 +180,7 @@ export class VeniceAPIClient {
     messages.push({ role: 'user', content: prompt });
 
     // Convert Zod schema to JSON Schema format for Venice API
-    const jsonSchema = zodToJsonSchema(schema, {
+    const jsonSchema = zodToJsonSchema(schema as z.ZodTypeAny, {
       $refStrategy: 'none',
       target: 'openApi3'
     });
