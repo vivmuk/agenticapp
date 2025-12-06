@@ -1,30 +1,9 @@
 {
   "$schema": "https://schema.railway.app/railway.schema.json",
-  "build": {
-    "builder": "DOCKERFILE",
-    "dockerfilePath": "Dockerfile",
-    "watchPatterns": ["src/**", "public/**", "index.html"]
-  },
   "deploy": {
     "healthcheckPath": "/",
     "healthcheckTimeout": 100,
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 10
-  },
-  "env": {
-    "VITE_API_URL": {
-      "description": "Backend API URL (e.g., https://your-backend-domain.railway.app)"
-    },
-    "VITE_WS_URL": {
-      "description": "WebSocket URL for real-time updates (e.g., wss://your-backend-domain.railway.app)"
-    },
-    "VITE_APP_NAME": {
-      "description": "Application name",
-      "value": "Agentic App"
-    },
-    "VITE_APP_VERSION": {
-      "description": "Application version",
-      "value": "1.0.0"
-    }
   }
 }
