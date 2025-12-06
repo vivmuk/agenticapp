@@ -181,9 +181,7 @@ export class VeniceAPIClient {
 
     // Convert Zod schema to JSON Schema format for Venice API
     // Extract to variable to help TypeScript with type inference
-    // @ts-expect-error - zodToJsonSchema has complex type inference that causes TS2589
     const schemaForConversion: z.ZodTypeAny = schema;
-    // @ts-expect-error - Type instantiation depth issue with zodToJsonSchema
     const jsonSchema = zodToJsonSchema(schemaForConversion, {
       $refStrategy: 'none',
       target: 'openApi3'
@@ -218,7 +216,7 @@ export class VeniceAPIClient {
     }
 
     try {
-      const parsed = JSON.parse(content);
+      const parsed = this.parseJsonContent(content);
       return schema.parse(parsed);
     } catch (error) {
       logger.error('Failed to parse or validate structured response', {
@@ -343,7 +341,7 @@ Include the most relevant search results with accurate titles, URLs, and snippet
         throw new Error('No content received from web search');
       }
 
-      const parsed = JSON.parse(content);
+      const parsed = this.parseJsonContent(content);
       const validated = searchSchema.parse(parsed);
 
       logger.info('Web search completed successfully', { resultCount: validated.results.length });
@@ -361,6 +359,30 @@ Include the most relevant search results with accurate titles, URLs, and snippet
     } catch (error) {
       logger.error('Failed to list models', { error: (error as Error).message });
       throw error;
+    }
+  }
+
+  private parseJsonContent(content: string): unknown {
+    const trimmed = content.trim();
+    const fencedMatch = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/i);
+    const candidate = fencedMatch ? fencedMatch[1].trim() : trimmed;
+
+    try {
+      return JSON.parse(candidate);
+    } catch (primaryError) {
+      const firstBrace = candidate.indexOf('{');
+      const lastBrace = candidate.lastIndexOf('}');
+
+      if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+        const slice = candidate.substring(firstBrace, lastBrace + 1);
+        try {
+          return JSON.parse(slice);
+        } catch {
+          // fall through to throw below
+        }
+      }
+
+      throw primaryError;
     }
   }
 }
