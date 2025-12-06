@@ -8,7 +8,7 @@ datasource db {
 }
 
 model WorkflowRun {
-  id                    String    @id @default(cuid()) @map("_id")
+  id                    String    @id @default(auto()) @map("_id") @db.ObjectId
   topic                 String
   status                WorkflowStatus @default(INITIALIZING)
   currentCycle          Int       @default(1)
@@ -32,8 +32,8 @@ model WorkflowRun {
 }
 
 model ContentVersion {
-  id            String    @id @default(cuid()) @map("_id")
-  workflowRunId String
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  workflowRunId String    @db.ObjectId
   cycleNumber   Int
   versionType   VersionType
   content       Json
@@ -49,8 +49,8 @@ model ContentVersion {
 }
 
 model AgentResponse {
-  id            String    @id @default(cuid()) @map("_id")
-  workflowRunId String
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  workflowRunId String    @db.ObjectId
   agentType     AgentType
   cycleNumber   Int
   input         Json?
@@ -68,8 +68,8 @@ model AgentResponse {
 }
 
 model HumanReview {
-  id                    String    @id @default(cuid()) @map("_id")
-  workflowRunId         String
+  id                    String    @id @default(auto()) @map("_id") @db.ObjectId
+  workflowRunId         String    @db.ObjectId
   reviewerId            String?
   reviewerName          String?
   status                HumanReviewStatus @default(PENDING)
@@ -96,8 +96,8 @@ model HumanReview {
 }
 
 model ReviewComment {
-  id            String    @id @default(cuid()) @map("_id")
-  humanReviewId String
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  humanReviewId String    @db.ObjectId
   contentType   CommentContentType
   text          String
   selection     Json?
@@ -115,7 +115,7 @@ model ReviewComment {
 }
 
 model ReviewMetrics {
-  id                      String    @id @default(cuid()) @map("_id")
+  id                      String    @id @default(auto()) @map("_id") @db.ObjectId
   reviewerId              String
   reviewerName            String
   totalReviews            Int       @default(0)
@@ -132,8 +132,8 @@ model ReviewMetrics {
 }
 
 model ReviewQueue {
-  id              String    @id @default(cuid()) @map("_id")
-  workflowRunId   String
+  id              String    @id @default(auto()) @map("_id") @db.ObjectId
+  workflowRunId   String    @db.ObjectId
   topic           String
   priority        ReviewPriority
   triggerReason   TriggerReason

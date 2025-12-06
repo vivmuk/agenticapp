@@ -61,26 +61,39 @@ export class QualityCriticAgent extends AgentBase<QualityCritiqueInput, QualityC
  reasoning: z.string(),
  });
 
- try {
- const evaluation = await this.veniceClient.generateWithSchema(
- evaluationPrompt,
- schema,
- systemPrompt
- );
+    try {
+      const evaluation = await this.veniceClient.generateWithSchema(
+        evaluationPrompt,
+        schema,
+        systemPrompt
+      );
 
- return {
- overallScore: evaluation.overallScore,
- coherenceScore: evaluation.coherenceScore,
- engagementScore: evaluation.engagementScore,
- accuracyScore: evaluation.accuracyScore,
- improvements: evaluation.improvements || [],
- finalRecommendation: evaluation.finalRecommendation,
- reasoning: evaluation.reasoning,
- };
- } catch (error) {
- logger.error('Failed to evaluate quality', {
- error: (error as Error).message,
- });
+      const toNumber = (value: any, fallback: number) => (
+        typeof value === 'number' && !Number.isNaN(value) ? value : fallback
+      );
+
+      const improvements = Array.isArray(evaluation.improvements) ? evaluation.improvements.map((imp: any) => ({
+        type: typeof imp?.type === 'string' ? imp.type : 'general',
+        severity: typeof imp?.severity === 'string' ? imp.severity : 'medium',
+        description: typeof imp?.description === 'string' ? imp.description : 'Improvement opportunity identified',
+        suggestion: typeof imp?.suggestion === 'string' ? imp.suggestion : 'Provide a concise, actionable suggestion.',
+      })) : [];
+
+      return {
+        overallScore: toNumber(evaluation.overallScore, 70),
+        coherenceScore: toNumber(evaluation.coherenceScore, 70),
+        engagementScore: toNumber(evaluation.engagementScore, 70),
+        accuracyScore: toNumber(evaluation.accuracyScore, 70),
+        improvements,
+        finalRecommendation: ['accept', 'improve', 'reject'].includes((evaluation as any)?.finalRecommendation)
+          ? evaluation.finalRecommendation
+          : 'improve',
+        reasoning: evaluation.reasoning || 'AI response did not include detailed reasoning; used defaults.',
+      };
+    } catch (error) {
+      logger.error('Failed to evaluate quality', {
+        error: (error as Error).message,
+      });
 
  return this.getFallbackEvaluation(input);
  }

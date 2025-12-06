@@ -129,23 +129,30 @@ IMPORTANT: You must ALWAYS respond with valid JSON only. No explanations or text
  })),
  });
 
- try {
- const analysis = await this.veniceClient.generateWithSchema(
- analysisPrompt,
- schema,
- systemPrompt
- );
+    try {
+      const analysis = await this.veniceClient.generateWithSchema(
+        analysisPrompt,
+        schema,
+        systemPrompt
+      );
 
- return {
- statement: claim,
- isVerified: analysis.isVerified,
- confidence: analysis.confidence,
- sources: analysis.sources || [],
- };
- } catch (error) {
- logger.warn('Failed to analyze claim accuracy', {
- claim: claim.substring(0, 50),
- error: (error as Error).message,
+      const confidence = typeof (analysis as any)?.confidence === 'number'
+        ? (analysis as any).confidence
+        : 0;
+      const sources = Array.isArray((analysis as any)?.sources)
+        ? (analysis as any).sources
+        : [];
+
+      return {
+        statement: claim,
+        isVerified: typeof (analysis as any)?.isVerified === 'boolean' ? analysis.isVerified : false,
+        confidence,
+        sources,
+      };
+    } catch (error) {
+      logger.warn('Failed to analyze claim accuracy', {
+        claim: claim.substring(0, 50),
+        error: (error as Error).message,
  });
 
  return {

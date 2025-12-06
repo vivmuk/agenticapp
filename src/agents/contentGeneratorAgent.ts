@@ -27,6 +27,8 @@ export class ContentGeneratorAgent extends AgentBase<ContentGenerationInput, Con
           systemPrompt
         );
 
+        structuredResponse = this.normalizeContentFields(structuredResponse);
+
         // Normalize field names if needed (handle cases where API returns different field names)
         if (structuredResponse && typeof structuredResponse === 'object') {
           // Handle case where API returns linkedin_post instead of linkedinPost
@@ -144,6 +146,36 @@ Cycle ${input.cycleNumber} of ${input.maxCycles || 3}. Focus on quality and impr
       imagePrompt: z.string().min(1), // Reduced minimum length to prevent validation errors
       keyClaims: z.array(z.string()).min(1), // Reduced minimum count to prevent validation errors
     });
+  }
+
+  private normalizeContentFields(raw: any) {
+    if (!raw || typeof raw !== 'object') {
+      return {};
+    }
+
+    // Normalize keys by removing spaces/underscores and lowercasing for easier matching
+    const normalizedEntries = Object.entries(raw).reduce<Record<string, any>>((acc, [key, value]) => {
+      const normalizedKey = key.replace(/[\s_-]+/g, '').toLowerCase();
+      acc[normalizedKey] = value;
+      return acc;
+    }, {});
+
+    const pick = (...aliases: string[]) => {
+      for (const alias of aliases) {
+        const normalized = alias.replace(/[\s_-]+/g, '').toLowerCase();
+        if (normalizedEntries[normalized] !== undefined) {
+          return normalizedEntries[normalized];
+        }
+      }
+      return undefined;
+    };
+
+    return {
+      definition: pick('definition', 'summary', 'overview'),
+      linkedinPost: pick('linkedinpost', 'linkedin_post', 'linkedInPost', 'linkedin', 'post'),
+      imagePrompt: pick('imageprompt', 'image_prompt', 'prompt', 'image'),
+      keyClaims: pick('keyclaims', 'key_claims', 'claims', 'bullets', 'points'),
+    };
   }
 
   private async generateImage(prompt: string): Promise<any> {

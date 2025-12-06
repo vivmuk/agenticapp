@@ -218,10 +218,29 @@ export class VeniceAPIClient {
 
     try {
       const parsed = this.parseJsonContent(content);
-      return schema.parse(parsed);
+
+      // Prefer safeParse so we can still return best-effort content when the model drifts
+      const hasValidator = schema && typeof (schema as any).safeParse === 'function';
+      if (!hasValidator) {
+        logger.warn('generateWithSchema called without a valid Zod schema parser; returning raw content', {
+          model: request.model,
+        });
+        return parsed as T;
+      }
+
+      const validation = (schema as any).safeParse(parsed);
+      if (!validation.success) {
+        logger.warn('Structured response validation failed, returning best-effort payload', {
+          issues: validation.error.issues?.slice(0, 5),
+          preview: typeof content === 'string' ? content.substring(0, 300) : '[non-string content]',
+        });
+        return parsed as T;
+      }
+
+      return validation.data;
     } catch (error) {
       logger.error('Failed to parse or validate structured response', {
-        content: content.substring(0, 500),
+        content: typeof content === 'string' ? content.substring(0, 500) : '[non-string content]',
         error: (error as Error).message,
       });
       throw new Error(`Invalid structured response: ${(error as Error).message}`);
