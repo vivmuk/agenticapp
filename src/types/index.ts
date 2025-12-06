@@ -45,7 +45,7 @@ export interface Source {
 
 export interface QualityCritiqueInput {
   content: ContentPackage;
-  accuracyCritique: AccuracyCritique;
+  accuracyCritique?: AccuracyCritique;
   cycleNumber: number;
 }
 

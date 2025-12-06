@@ -18,6 +18,7 @@ model WorkflowRun {
   humanReviewRequired   Boolean   @default(false)
   humanReviewProvided   Boolean   @default(false)
   humanReviewFeedback   String?
+  agentStatus           Json?
   startedAt             DateTime  @default(now())
   completedAt           DateTime?
   createdAt             DateTime  @default(now())

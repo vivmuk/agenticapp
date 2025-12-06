@@ -36,8 +36,8 @@ export class WorkflowManager {
 
     // Convert qualityThreshold from 0-1 scale to 0-10 scale for database
     // Frontend sends 0-1, but database stores 0-10
-    const qualityThreshold = input.qualityThreshold 
-      ? input.qualityThreshold * 10 
+    const qualityThreshold = input.qualityThreshold
+      ? input.qualityThreshold * 10
       : 7.0;
 
     // Create workflow in database first to get the generated ID
@@ -50,6 +50,11 @@ export class WorkflowManager {
         qualityThreshold: qualityThreshold,
         humanReviewRequired: false,
         humanReviewProvided: false,
+        agentStatus: {
+          [AgentType.CONTENT_GENERATOR]: { status: 'idle' },
+          [AgentType.WEB_SEARCH_CRITIC]: { status: 'idle' },
+          [AgentType.QUALITY_CRITIC]: { status: 'idle' },
+        },
         startedAt: new Date(),
       },
     });
@@ -332,6 +337,7 @@ export class WorkflowManager {
           humanReviewRequired: workflowState.humanReviewRequired,
           humanReviewProvided: workflowState.humanReviewProvided,
           humanReviewFeedback: workflowState.humanReviewFeedback,
+          agentStatus: workflowState.agentStatus as any,
           completedAt: workflowState.completedAt,
         },
       });
@@ -370,7 +376,7 @@ export class WorkflowManager {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       const errorStack = error instanceof Error ? error.stack : undefined;
-      
+
       logger.error('Failed to save workflow state', {
         workflowId: workflowState.id,
         error: errorMessage,
@@ -381,10 +387,10 @@ export class WorkflowManager {
           topic: workflowState.topic,
         },
       });
-      
+
       console.error('[ERROR] Failed to save workflow state:', errorMessage);
       console.error('[ERROR] Stack:', errorStack);
-      
+
       throw error;
     }
   }
@@ -413,7 +419,7 @@ export class WorkflowManager {
       humanReviewProvided: dbWorkflow.humanReviewProvided,
       humanReviewFeedback: dbWorkflow.humanReviewFeedback,
       currentContent: latestContentVersion?.content,
-      agentStatus: {},
+      agentStatus: dbWorkflow.agentStatus ? (dbWorkflow.agentStatus as Record<string, any>) : {},
       startedAt: dbWorkflow.startedAt,
       completedAt: dbWorkflow.completedAt,
     };
