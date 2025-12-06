@@ -9,10 +9,11 @@ import {
 } from '@/types';
 
 // Use VITE_API_URL or VITE_API_BASE_URL for backwards compatibility
+// Prefer explicit env; fall back to current origin to avoid localhost in prod
 export const API_BASE_URL = 
   import.meta.env.VITE_API_URL || 
   import.meta.env.VITE_API_BASE_URL || 
-  'http://localhost:3001';
+  window.location.origin;
 
 const api = axios.create({
   baseURL: `${API_BASE_URL}/api`,
