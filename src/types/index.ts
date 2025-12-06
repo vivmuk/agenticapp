@@ -259,7 +259,96 @@ export interface WorkflowStartInput {
   topic: string;
   maxCycles?: number;
   qualityThreshold?: number;
+  model?: string;
 }
+
+// Venice AI Models that support structured responses for orchestration
+export const SUPPORTED_VENICE_MODELS = [
+  // Fast & Affordable
+  {
+    id: 'qwen3-4b',
+    name: 'Venice Small (Qwen 3 4B)',
+    description: 'Fast and efficient with structured responses',
+    pricing: { input: 0.05, output: 0.15 },
+    contextTokens: 32768,
+    traits: ['fast', 'structured_responses', 'function_calling', 'reasoning'],
+  },
+  // Balanced Performance
+  {
+    id: 'mistral-31-24b',
+    name: 'Venice Medium (Mistral 3.1 24B)',
+    description: 'Balanced performance with vision support',
+    pricing: { input: 0.5, output: 2 },
+    contextTokens: 131072,
+    traits: ['balanced', 'structured_responses', 'function_calling', 'vision'],
+  },
+  {
+    id: 'llama-3.3-70b',
+    name: 'Llama 3.3 70B',
+    description: 'Default model with function calling',
+    pricing: { input: 0.7, output: 2.8 },
+    contextTokens: 131072,
+    traits: ['default', 'function_calling'],
+  },
+  // Advanced Models
+  {
+    id: 'qwen3-235b',
+    name: 'Venice Large 1.1 (Qwen 3 235B)',
+    description: 'High quality with reasoning capabilities',
+    pricing: { input: 0.45, output: 3.5 },
+    contextTokens: 131072,
+    traits: ['high_quality', 'structured_responses', 'function_calling', 'reasoning'],
+  },
+  {
+    id: 'grok-41-fast',
+    name: 'Grok 4.1 Fast',
+    description: 'Fast reasoning with vision support',
+    pricing: { input: 0.5, output: 1.25 },
+    contextTokens: 262144,
+    traits: ['fast', 'structured_responses', 'function_calling', 'reasoning', 'vision'],
+  },
+  {
+    id: 'kimi-k2-thinking',
+    name: 'Kimi K2 Thinking',
+    description: 'Deep reasoning optimized for code',
+    pricing: { input: 0.75, output: 3.2 },
+    contextTokens: 262144,
+    traits: ['structured_responses', 'function_calling', 'reasoning', 'code'],
+  },
+  {
+    id: 'zai-org-glm-4.6',
+    name: 'GLM 4.6',
+    description: 'Powerful function calling model',
+    pricing: { input: 0.85, output: 2.75 },
+    contextTokens: 202752,
+    traits: ['structured_responses', 'function_calling'],
+  },
+  {
+    id: 'deepseek-ai-DeepSeek-R1',
+    name: 'DeepSeek R1',
+    description: 'Strong reasoning with function calling',
+    pricing: { input: 0.85, output: 2.75 },
+    contextTokens: 131072,
+    traits: ['structured_responses', 'function_calling'],
+  },
+  // Premium Models
+  {
+    id: 'gemini-3-pro-preview',
+    name: 'Gemini 3 Pro Preview',
+    description: 'Google\'s latest with reasoning & vision',
+    pricing: { input: 2.5, output: 15 },
+    contextTokens: 202752,
+    traits: ['premium', 'structured_responses', 'function_calling', 'reasoning', 'vision'],
+  },
+  {
+    id: 'claude-opus-45',
+    name: 'Claude Opus 4.5',
+    description: 'Anthropic\'s flagship with full capabilities',
+    pricing: { input: 6, output: 30 },
+    contextTokens: 202752,
+    traits: ['premium', 'structured_responses', 'function_calling', 'reasoning', 'vision', 'code'],
+  },
+] as const;
 
 export interface WorkflowResponse {
   success: boolean;

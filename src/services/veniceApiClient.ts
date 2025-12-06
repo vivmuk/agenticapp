@@ -37,6 +37,12 @@ export interface VeniceChatRequest {
   tools?: VeniceTool[];
   tool_choice?: 'auto' | 'required';
   response_format?: { type: 'json_object' };
+  // Venice-specific web search parameters
+  venice_parameters?: {
+    enable_web_search?: 'on' | 'off' | 'auto';
+    enable_web_citations?: boolean;
+    include_venice_system_prompt?: boolean;
+  };
 }
 
 export interface VeniceChatResponse {
@@ -203,7 +209,7 @@ export class VeniceAPIClient {
 
   async performWebSearch(query: string): Promise<any> {
     logger.info('Performing web search', { query: query.substring(0, 100) });
-    
+
     const searchSchema = z.object({
       results: z.array(z.object({
         title: z.string(),
@@ -213,30 +219,46 @@ export class VeniceAPIClient {
       totalResults: z.number(),
     });
 
-    const systemPrompt = `You are a web search assistant. Search for information related to the user's query and provide structured results with titles, URLs, and snippets.`;
+    const systemPrompt = `You are a web search assistant. Search for information related to the user's query using web search.
+Analyze the search results and provide a structured JSON response with the following format:
+{
+  "results": [
+    {"title": "...", "url": "...", "snippet": "..."},
+    ...
+  ],
+  "totalResults": <number>
+}
+Include the most relevant search results with accurate titles, URLs, and snippets.`;
 
     try {
-      const response = await this.generateWithSchema(
-        query,
-        searchSchema,
-        systemPrompt,
-        [{
-          type: 'function' as const,
-          function: {
-            name: 'web_search',
-            description: 'Search the web for information',
-            parameters: {
-              type: 'object',
-              properties: {
-                query: { type: 'string', description: 'Search query' },
-              },
-              required: ['query'],
-            },
-          },
-        }]
-      );
-      logger.info('Web search completed successfully', { resultCount: response.results.length });
-      return response;
+      const messages: VeniceMessage[] = [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: `Search the web for: ${query}` },
+      ];
+
+      // Use Venice's native web search capability
+      const request: VeniceChatRequest = {
+        model: this.config.model,
+        messages,
+        response_format: { type: 'json_object' },
+        venice_parameters: {
+          enable_web_search: 'on',
+          enable_web_citations: true,
+        },
+      };
+
+      const response = await this.generateChatCompletion(request);
+      const content = response.choices[0]?.message?.content;
+
+      if (!content) {
+        throw new Error('No content received from web search');
+      }
+
+      const parsed = JSON.parse(content);
+      const validated = searchSchema.parse(parsed);
+
+      logger.info('Web search completed successfully', { resultCount: validated.results.length });
+      return validated;
     } catch (error) {
       logger.error('Failed to perform web search', { error: (error as Error).message });
       throw error;

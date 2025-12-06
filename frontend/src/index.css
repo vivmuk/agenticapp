@@ -1,53 +1,203 @@
+/* Import Inter font - must be first */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 270 91% 65%;
-    --primary-foreground: 222.2 84% 4.9%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 270 91% 65%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 50%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 270 91% 65%;
-    --radius: 0.75rem;
+    --primary-red: #dc2626;
+    --primary-red-dark: #b91c1c;
+    --background: #fafafa;
+    --foreground: #0f0f0f;
+    --card: #ffffff;
+    --card-foreground: #0f0f0f;
+    --border: #e5e5e5;
+    --muted: #6b7280;
+    --radius: 0.5rem;
   }
 }
 
 @layer base {
   * {
-    @apply border-border;
+    @apply border-gray-200;
   }
-  
+
   html {
-    @apply bg-slate-950;
+    @apply bg-white;
   }
-  
+
   body {
-    @apply bg-slate-950 text-slate-100 antialiased;
+    @apply bg-white text-gray-900 antialiased;
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 
-  /* Custom selection */
   ::selection {
-    @apply bg-purple-500/30 text-white;
+    @apply bg-red-500/20 text-red-900;
   }
 }
 
 @layer components {
+  /* Hero Title */
+  .hero-title {
+    @apply text-5xl md:text-7xl font-black tracking-tight leading-none;
+  }
+
+  .hero-title-black {
+    @apply text-gray-900;
+  }
+
+  .hero-title-red {
+    @apply text-red-600;
+  }
+
+  /* Subtitle */
+  .hero-subtitle {
+    @apply text-lg text-gray-500 border-l-4 border-red-600 pl-4;
+  }
+
+  /* Tab Navigation */
+  .tab-nav {
+    @apply flex border-b-2 border-gray-200;
+  }
+
+  .tab-item {
+    @apply px-8 py-4 text-sm font-semibold uppercase tracking-wider transition-all cursor-pointer;
+  }
+
+  .tab-item.active {
+    @apply bg-red-600 text-white;
+  }
+
+  .tab-item:not(.active) {
+    @apply bg-white text-gray-600 hover:bg-gray-100;
+  }
+
+  /* Section Labels */
+  .section-label {
+    @apply text-xs font-semibold uppercase tracking-widest text-gray-500 mb-2;
+  }
+
+  /* Form Fields */
+  .form-label {
+    @apply text-xs font-bold uppercase tracking-widest text-gray-700 mb-2 block;
+  }
+
+  .input-field {
+    @apply w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-lg text-gray-900
+           placeholder-gray-400 focus:outline-none focus:border-red-500
+           focus:ring-0 transition-all text-base;
+  }
+
+  .input-field:hover {
+    @apply border-gray-300;
+  }
+
+  /* Select Field */
+  select.input-field {
+    @apply appearance-none bg-no-repeat bg-right pr-10 cursor-pointer;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 0.75rem center;
+    background-size: 1.25rem 1.25rem;
+  }
+
+  /* Cards */
+  .card {
+    @apply bg-white border-2 border-gray-200 rounded-xl p-6;
+  }
+
+  .card-selected {
+    @apply border-red-500 bg-red-50;
+  }
+
+  /* Buttons */
+  .btn-primary {
+    @apply px-6 py-3 bg-gray-900 text-white font-bold uppercase tracking-wider rounded-lg
+           hover:bg-gray-800 transition-all text-sm;
+  }
+
+  .btn-primary:disabled {
+    @apply opacity-50 cursor-not-allowed;
+  }
+
+  .btn-secondary {
+    @apply px-6 py-3 bg-white text-gray-900 font-bold uppercase tracking-wider rounded-lg
+           border-2 border-gray-200 hover:border-gray-300 transition-all text-sm;
+  }
+
+  .btn-red {
+    @apply px-6 py-3 bg-red-600 text-white font-bold uppercase tracking-wider rounded-lg
+           hover:bg-red-700 transition-all text-sm;
+  }
+
+  /* Checkbox */
+  .checkbox-custom {
+    @apply w-5 h-5 rounded border-2 border-gray-300 text-red-600
+           focus:ring-red-500 focus:ring-offset-0 cursor-pointer;
+  }
+
+  .checkbox-custom:checked {
+    @apply bg-red-600 border-red-600;
+  }
+
+  /* Tags/Pills */
+  .tag {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide;
+  }
+
+  .tag-gray {
+    @apply bg-gray-100 text-gray-700;
+  }
+
+  .tag-green {
+    @apply bg-green-100 text-green-700;
+  }
+
+  .tag-red {
+    @apply bg-red-100 text-red-700;
+  }
+
+  /* Status indicators */
+  .status-dot {
+    @apply w-2 h-2 rounded-full inline-block mr-2;
+  }
+
+  .status-dot.idle { @apply bg-gray-400; }
+  .status-dot.running { @apply bg-yellow-500 animate-pulse; }
+  .status-dot.completed { @apply bg-green-500; }
+  .status-dot.error { @apply bg-red-500; }
+
+  /* Output Format Cards */
+  .format-card {
+    @apply p-5 border-2 border-gray-200 rounded-xl cursor-pointer transition-all;
+  }
+
+  .format-card:hover {
+    @apply border-gray-300;
+  }
+
+  .format-card.selected {
+    @apply border-red-500 bg-red-50;
+  }
+
+  .format-card-title {
+    @apply font-bold text-gray-900 uppercase tracking-wide text-sm mb-1;
+  }
+
+  .format-card-desc {
+    @apply text-xs text-gray-500 uppercase tracking-wide;
+  }
+
+  /* Grid pattern background */
+  .grid-bg {
+    background-image:
+      linear-gradient(to right, #f0f0f0 1px, transparent 1px),
+      linear-gradient(to bottom, #f0f0f0 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+
   /* React Flow customization */
   .react-flow__node {
     @apply transition-all duration-300 ease-in-out;
@@ -61,17 +211,13 @@
     @apply hidden;
   }
 
-  .react-flow__background {
-    @apply opacity-20;
-  }
-
   /* Agent nodes */
   .agent-node {
-    @apply rounded-xl shadow-lg border-2 transition-all duration-300;
+    @apply rounded-xl shadow-lg border-2 transition-all duration-300 bg-white;
   }
 
   .agent-node.running {
-    @apply shadow-purple-500/30;
+    @apply shadow-red-200 border-red-400;
   }
 
   /* Status badges */
@@ -80,33 +226,34 @@
   }
 
   .status-badge.idle {
-    @apply bg-slate-700/50 text-slate-300 border border-slate-600;
+    @apply bg-gray-100 text-gray-600 border border-gray-200;
   }
 
   .status-badge.running {
-    @apply bg-purple-900/50 text-purple-300 border border-purple-500/50 animate-pulse;
+    @apply bg-yellow-100 text-yellow-700 border border-yellow-300 animate-pulse;
   }
 
   .status-badge.completed {
-    @apply bg-green-900/50 text-green-300 border border-green-500/50;
+    @apply bg-green-100 text-green-700 border border-green-300;
   }
 
   .status-badge.error {
-    @apply bg-red-900/50 text-red-300 border border-red-500/50;
+    @apply bg-red-100 text-red-700 border border-red-300;
   }
 
-  /* Cards */
+  /* Glass card */
   .glass-card {
-    @apply bg-slate-900/80 backdrop-blur-xl border border-purple-500/20 rounded-xl shadow-xl;
+    @apply bg-white/80 backdrop-blur-xl border border-gray-200 rounded-xl shadow-sm;
   }
 
+  /* Metric card */
   .metric-card {
-    @apply bg-slate-800/50 rounded-xl border border-slate-700 p-4;
+    @apply bg-gray-50 rounded-xl border border-gray-200 p-4;
   }
 
   /* Content preview */
   .content-preview {
-    @apply bg-slate-800/50 rounded-xl border border-slate-700 p-6;
+    @apply bg-gray-50 rounded-xl border border-gray-200 p-6;
   }
 
   /* Activity feed */
@@ -115,7 +262,7 @@
   }
 
   .activity-item {
-    @apply flex items-start space-x-3 p-3 rounded-lg bg-slate-800/50 border border-slate-700/50;
+    @apply flex items-start space-x-3 p-3 rounded-lg bg-gray-50 border border-gray-200;
   }
 
   /* Quality score */
@@ -123,43 +270,13 @@
     @apply text-2xl font-bold;
   }
 
-  .quality-score.high {
-    @apply text-green-400;
-  }
-
-  .quality-score.medium {
-    @apply text-yellow-400;
-  }
-
-  .quality-score.low {
-    @apply text-red-400;
-  }
-
-  /* Buttons */
-  .btn-primary {
-    @apply px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-medium rounded-lg 
-           hover:from-purple-500 hover:to-pink-500 transition-all shadow-lg shadow-purple-500/25;
-  }
-
-  .btn-secondary {
-    @apply px-4 py-2 bg-slate-800 text-slate-200 font-medium rounded-lg 
-           hover:bg-slate-700 transition-all border border-slate-700;
-  }
-
-  /* Input fields */
-  .input-field {
-    @apply w-full px-4 py-3 bg-slate-800/50 border border-purple-500/30 rounded-xl text-white 
-           placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500 
-           focus:border-transparent transition-all;
-  }
+  .quality-score.high { @apply text-green-600; }
+  .quality-score.medium { @apply text-yellow-600; }
+  .quality-score.low { @apply text-red-600; }
 
   /* Glow effects */
-  .glow-purple {
-    box-shadow: 0 0 40px -10px rgba(168, 85, 247, 0.5);
-  }
-
-  .glow-pink {
-    box-shadow: 0 0 40px -10px rgba(236, 72, 153, 0.5);
+  .glow-red {
+    box-shadow: 0 0 40px -10px rgba(220, 38, 38, 0.3);
   }
 }
 
@@ -171,7 +288,7 @@
   /* Custom scrollbar */
   .scrollbar-thin {
     scrollbar-width: thin;
-    scrollbar-color: rgb(71 85 105) transparent;
+    scrollbar-color: rgb(209 213 219) transparent;
   }
 
   .scrollbar-thin::-webkit-scrollbar {
@@ -184,46 +301,29 @@
   }
 
   .scrollbar-thin::-webkit-scrollbar-thumb {
-    background-color: rgb(71 85 105);
+    background-color: rgb(209 213 219);
     border-radius: 3px;
   }
 
   .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-    background-color: rgb(100 116 139);
+    background-color: rgb(156 163 175);
   }
 
   /* Animation utilities */
   .animate-pulse-slow {
     animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   }
-
-  .animate-gradient {
-    background-size: 200% 200%;
-    animation: gradient 3s ease infinite;
-  }
-
-  @keyframes gradient {
-    0%, 100% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-  }
-
-  /* Backdrop blur fallback */
-  @supports not (backdrop-filter: blur(12px)) {
-    .backdrop-blur-xl {
-      background-color: rgba(15, 23, 42, 0.95);
-    }
-  }
 }
 
-/* Fix for React Flow controls in dark mode */
+/* React Flow controls in light mode */
 .react-flow__controls button {
-  background-color: rgb(30 41 59) !important;
-  border-color: rgb(51 65 85) !important;
-  color: rgb(203 213 225) !important;
+  background-color: white !important;
+  border-color: rgb(229 231 235) !important;
+  color: rgb(55 65 81) !important;
 }
 
 .react-flow__controls button:hover {
-  background-color: rgb(51 65 85) !important;
+  background-color: rgb(249 250 251) !important;
 }
 
 .react-flow__controls button svg {
@@ -232,63 +332,11 @@
 
 /* React Flow minimap */
 .react-flow__minimap {
-  background-color: rgb(15 23 42) !important;
-  border: 1px solid rgb(51 65 85) !important;
+  background-color: white !important;
+  border: 1px solid rgb(229 231 235) !important;
   border-radius: 0.5rem;
 }
 
-/* --- Minimal Swiss-style fallbacks (ensures styling even if Tailwind fails) --- */
-body {
-  margin: 0;
-  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background: #f6f6f6;
-  color: #0f0f0f;
-}
-
-a { color: inherit; text-decoration: none; }
-
-button {
-  font-family: inherit;
-}
-
-.btn-primary {
-  display: inline-block;
-  padding: 12px 16px;
-  background: #0f0f0f;
-  color: #fff;
-  border: 1px solid #0f0f0f;
-  border-radius: 10px;
-  font-weight: 600;
-  text-align: center;
-  transition: all 0.15s ease;
-}
-.btn-primary:hover { background: #1a1a1a; }
-
-.input-field {
-  width: 100%;
-  padding: 12px 14px;
-  border: 1px solid #dcdcdc;
-  border-radius: 10px;
-  background: #fff;
-  font-size: 14px;
-}
-
-.card {
-  background: #fff;
-  border: 1px solid #e5e5e5;
-  border-radius: 14px;
-  padding: 20px;
-}
-
-.label-muted {
-  text-transform: uppercase;
-  letter-spacing: 0.2em;
-  font-size: 11px;
-  color: #6f6f6f;
-}
-
-.title-sm {
-  font-size: 18px;
-  font-weight: 600;
-  margin: 0 0 10px 0;
+.react-flow__background {
+  @apply opacity-30;
 }

@@ -10,24 +10,31 @@ const router = express.Router();
 
 // Initialize services (in production, these would be dependency injected)
 const prisma = new PrismaClient();
-const veniceClient = new VeniceAPIClient({
-  apiKey: process.env.VENICE_API_KEY!,
-  baseURL: process.env.VENICE_BASE_URL!,
-  model: 'llama-3.2-3b',
-  temperature: 0.8,
-  topP: 0.9,
-});
-const workflowManager = new WorkflowManager(veniceClient, prisma);
+
+// Factory function to create Venice client with specified model
+const createVeniceClient = (model: string = 'qwen3-4b') => {
+  return new VeniceAPIClient({
+    apiKey: process.env.VENICE_API_KEY!,
+    baseURL: process.env.VENICE_BASE_URL!,
+    model,
+    temperature: 0.8,
+    topP: 0.9,
+  });
+};
+
+// Default client for backwards compatibility
+const defaultVeniceClient = createVeniceClient();
+const workflowManager = new WorkflowManager(defaultVeniceClient, prisma);
 
 // POST /api/workflows/start - Initialize new workflow
 // IMPORTANT: This must come BEFORE /:id routes to avoid route conflicts
 router.post('/start', async (req, res) => {
   logger.info('POST /start handler executing', { body: req.body, method: req.method });
-  
-  try {
-    const { topic, maxCycles, qualityThreshold }: WorkflowStartInput = req.body;
 
-    logger.info('Parsed request', { topic, maxCycles, qualityThreshold });
+  try {
+    const { topic, maxCycles, qualityThreshold, model }: WorkflowStartInput = req.body;
+
+    logger.info('Parsed request', { topic, maxCycles, qualityThreshold, model });
 
     // Validate input
     if (!topic || typeof topic !== 'string' || topic.trim().length === 0) {
@@ -54,12 +61,17 @@ router.post('/start', async (req, res) => {
       });
     }
 
-    logger.info('Starting new workflow', { topic, maxCycles, qualityThreshold });
+    logger.info('Starting new workflow', { topic, maxCycles, qualityThreshold, model });
 
-    const workflowState = await workflowManager.startWorkflow({
+    // Create a new Venice client with the selected model if specified
+    const veniceClient = model ? createVeniceClient(model) : defaultVeniceClient;
+    const customWorkflowManager = new WorkflowManager(veniceClient, prisma);
+
+    const workflowState = await customWorkflowManager.startWorkflow({
       topic: topic.trim(),
       maxCycles,
       qualityThreshold,
+      model,
     });
 
     logger.info('Workflow started successfully', { workflowId: workflowState.id });

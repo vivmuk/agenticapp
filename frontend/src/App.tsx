@@ -3,65 +3,104 @@ import { WorkflowCanvas } from './components/workflow/WorkflowCanvas';
 import WorkflowStartForm from './components/workflow/WorkflowStartForm';
 import HumanReviewPanel from './components/humanReview/HumanReviewPanel';
 
+type ViewMode = 'create' | 'orchestration' | 'review';
+
 function App() {
-  const [activeView, setActiveView] = useState<'workflow' | 'review'>('workflow');
+  const [activeView, setActiveView] = useState<ViewMode>('create');
 
   return (
-    <div className="min-h-screen bg-[#f6f6f6] text-[#0f0f0f]">
-      {/* Header */}
-      <header className="border-b border-black/10 bg-white">
-        <div className="max-w-6xl mx-auto px-6 py-5 flex items-center justify-between">
-          <div className="flex items-baseline gap-3">
-            <div className="text-lg font-semibold tracking-tight">Agentic Content Studio</div>
-            <div className="text-xs uppercase tracking-[0.2em] text-black/60">Railway · Venice</div>
-          </div>
-          <nav className="flex items-center gap-2 text-sm">
-            <button
-              onClick={() => setActiveView('workflow')}
-              className={`px-4 py-2 rounded-full border transition ${
-                activeView === 'workflow'
-                  ? 'border-black bg-black text-white'
-                  : 'border-black/15 text-black hover:border-black/40'
-              }`}
-            >
-              Workflow
-            </button>
-            <button
-              onClick={() => setActiveView('review')}
-              className={`px-4 py-2 rounded-full border transition ${
-                activeView === 'review'
-                  ? 'border-black bg-black text-white'
-                  : 'border-black/15 text-black hover:border-black/40'
-              }`}
-            >
-              Human Review
-            </button>
-          </nav>
+    <div className="min-h-screen bg-white">
+      {/* Hero Header */}
+      <header className="border-b-2 border-gray-100">
+        <div className="max-w-7xl mx-auto px-8 py-10">
+          {/* Title */}
+          <h1 className="hero-title mb-3">
+            <span className="hero-title-black">V'S </span>
+            <span className="hero-title-red">LINKEDIN</span>
+            <br />
+            <span className="hero-title-red">POST CREATOR</span>
+          </h1>
+          {/* Subtitle */}
+          <p className="hero-subtitle">
+            AI-Powered Content Generation & Quality Assurance
+          </p>
         </div>
       </header>
 
+      {/* Tab Navigation */}
+      <nav className="border-b-2 border-gray-200 bg-white sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-8">
+          <div className="tab-nav">
+            <button
+              onClick={() => setActiveView('create')}
+              className={`tab-item ${activeView === 'create' ? 'active' : ''}`}
+            >
+              Create Post
+            </button>
+            <button
+              onClick={() => setActiveView('orchestration')}
+              className={`tab-item ${activeView === 'orchestration' ? 'active' : ''}`}
+            >
+              Orchestration
+            </button>
+            <button
+              onClick={() => setActiveView('review')}
+              className={`tab-item ${activeView === 'review' ? 'active' : ''}`}
+            >
+              Human Review
+            </button>
+          </div>
+        </div>
+      </nav>
+
       {/* Main Content */}
-      <main className="max-w-6xl mx-auto px-6 py-10">
-        {activeView === 'workflow' ? (
-          <div className="grid grid-cols-1 lg:grid-cols-[360px,1fr] gap-10 items-start">
-            <div className="bg-white border border-black/10 rounded-xl p-5 shadow-sm">
-              <div className="text-xs uppercase tracking-[0.2em] text-black/60 mb-2">Start</div>
-              <h2 className="text-xl font-semibold mb-4">Content Generation</h2>
-              <WorkflowStartForm onWorkflowStarted={() => {}} />
+      <main className="max-w-7xl mx-auto px-8 py-10 grid-bg min-h-[calc(100vh-300px)]">
+        {activeView === 'create' && (
+          <div className="max-w-3xl">
+            <WorkflowStartForm onWorkflowStarted={() => setActiveView('orchestration')} />
+          </div>
+        )}
+
+        {activeView === 'orchestration' && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">Agent Orchestration</h2>
+                <p className="text-gray-500 text-sm mt-1">Watch your content being created and refined</p>
+              </div>
+              <button
+                onClick={() => setActiveView('create')}
+                className="btn-secondary"
+              >
+                + New Post
+              </button>
             </div>
-            <div className="bg-white border border-black/10 rounded-xl p-4 shadow-sm h-[720px]">
-              <div className="text-xs uppercase tracking-[0.2em] text-black/60 mb-2">Orchestration</div>
+            <div className="bg-white border-2 border-gray-200 rounded-xl shadow-sm h-[600px]">
               <WorkflowCanvas />
             </div>
           </div>
-        ) : (
-          <div className="bg-white border border-black/10 rounded-xl p-6 shadow-sm">
-            <div className="text-xs uppercase tracking-[0.2em] text-black/60 mb-2">Review</div>
-            <h2 className="text-xl font-semibold mb-4">Human Review</h2>
-            <HumanReviewPanel />
+        )}
+
+        {activeView === 'review' && (
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">Human Review</h2>
+              <p className="text-gray-500 text-sm mt-1">Review and approve generated content</p>
+            </div>
+            <div className="bg-white border-2 border-gray-200 rounded-xl p-6">
+              <HumanReviewPanel />
+            </div>
           </div>
         )}
       </main>
+
+      {/* Footer */}
+      <footer className="border-t-2 border-gray-100 py-6">
+        <div className="max-w-7xl mx-auto px-8 flex items-center justify-between text-sm text-gray-500">
+          <span>Powered by Venice AI</span>
+          <span>v1.0.0</span>
+        </div>
+      </footer>
     </div>
   );
 }
