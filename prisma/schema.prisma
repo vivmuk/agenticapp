@@ -26,6 +26,7 @@ model WorkflowRun {
   contentVersions ContentVersion[]
   agentResponses AgentResponse[]
   humanReviews HumanReview[]
+  reviewQueue ReviewQueue?
 
   @@map("workflow_runs")
 }
