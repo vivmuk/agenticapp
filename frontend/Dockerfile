@@ -15,6 +15,19 @@ FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+
+# Pass build-time environment variables
+ARG VITE_API_URL
+ARG VITE_WS_URL
+ARG VITE_APP_NAME
+ARG VITE_APP_VERSION
+
+# Set them as environment variables for the build
+ENV VITE_API_URL=$VITE_API_URL
+ENV VITE_WS_URL=$VITE_WS_URL
+ENV VITE_APP_NAME=$VITE_APP_NAME
+ENV VITE_APP_VERSION=$VITE_APP_VERSION
+
 RUN npm run build
 
 # Production image with nginx

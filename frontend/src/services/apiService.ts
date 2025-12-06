@@ -9,16 +9,41 @@ import {
 } from '@/types';
 
 // Use VITE_API_URL or VITE_API_BASE_URL for backwards compatibility
-// Prefer explicit env; fall back to current origin to avoid localhost in prod
-export const API_BASE_URL = 
-  import.meta.env.VITE_API_URL || 
-  import.meta.env.VITE_API_BASE_URL || 
-  (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3001');
+// Prefer explicit env; fall back to backend domain if on frontend domain
+const getApiBaseUrl = () => {
+  // First, try explicit env var (set at build time)
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
+  }
+  
+  // Fallback to VITE_API_BASE_URL
+  if (import.meta.env.VITE_API_BASE_URL) {
+    return import.meta.env.VITE_API_BASE_URL;
+  }
+  
+  // Runtime fallback: if we're on the frontend domain, use backend domain
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    // If on frontend domain (agenticviv.up.railway.app), use backend domain
+    if (hostname.includes('agenticviv.up.railway.app') || hostname.includes('railway.app')) {
+      // Extract the project name and construct backend URL
+      // For Railway, backend is typically at backend-<project>.up.railway.app
+      return 'https://backend-agenticviv.up.railway.app';
+    }
+    // Otherwise fall back to same origin
+    return window.location.origin;
+  }
+  
+  return 'http://localhost:3001';
+};
+
+export const API_BASE_URL = getApiBaseUrl();
 
 // Debug logging (remove in production)
 if (typeof window !== 'undefined') {
   console.log('[API] Base URL:', API_BASE_URL);
   console.log('[API] VITE_API_URL env:', import.meta.env.VITE_API_URL);
+  console.log('[API] Current hostname:', window.location.hostname);
 }
 
 const api = axios.create({
