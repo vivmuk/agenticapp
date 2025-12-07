@@ -13,7 +13,7 @@ import ReactFlow, {
 } from 'reactflow';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useWorkflowStore } from '@/stores/workflowStore';
-import { AgentType, WorkflowStatus } from '@/types';
+import { AgentType, WorkflowStatus, ContentPackage } from '@/types';
 import { workflowService } from '@/services/apiService';
 import CustomNode from './CustomNode';
 import WorkflowStartForm from './WorkflowStartForm';
@@ -367,21 +367,19 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({ workflowId, allo
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
-              <div className={`w-3 h-3 rounded-full ${
-                currentWorkflow.status === WorkflowStatus.COMPLETED ? 'bg-green-500' :
+              <div className={`w-3 h-3 rounded-full ${currentWorkflow.status === WorkflowStatus.COMPLETED ? 'bg-green-500' :
                 currentWorkflow.status === WorkflowStatus.FAILED ? 'bg-red-500' :
-                'bg-purple-500 animate-pulse'
-              }`} />
+                  'bg-purple-500 animate-pulse'
+                }`} />
               <span className="text-white font-medium">{currentWorkflow.topic}</span>
             </div>
             <span className="text-gray-400 text-sm">
               Cycle {currentWorkflow.currentCycle} / {currentWorkflow.maxCycles}
             </span>
-            <span className={`px-2 py-1 rounded text-xs font-medium ${
-              currentWorkflow.status === WorkflowStatus.COMPLETED ? 'bg-green-500/20 text-green-300' :
+            <span className={`px-2 py-1 rounded text-xs font-medium ${currentWorkflow.status === WorkflowStatus.COMPLETED ? 'bg-green-500/20 text-green-300' :
               currentWorkflow.status === WorkflowStatus.FAILED ? 'bg-red-500/20 text-red-300' :
-              'bg-purple-500/20 text-purple-300'
-            }`}>
+                'bg-purple-500/20 text-purple-300'
+              }`}>
               {currentWorkflow.status}
             </span>
           </div>
@@ -404,12 +402,62 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({ workflowId, allo
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            className="bg-slate-900/80 border-b border-purple-500/20 px-6 py-4 max-h-64 overflow-y-auto"
+            className="bg-slate-900/80 border-b border-purple-500/20 px-6 py-4 max-h-96 overflow-y-auto"
           >
-            <h3 className="text-lg font-semibold text-white mb-2">Generated Content</h3>
-            <div className="prose prose-invert max-w-none">
-              <p className="text-gray-300 whitespace-pre-wrap">{currentWorkflow.currentContent}</p>
-            </div>
+            <h3 className="text-lg font-semibold text-white mb-4">Generated Content</h3>
+
+            {typeof currentWorkflow.currentContent === 'string' ? (
+              <div className="prose prose-invert max-w-none">
+                <p className="text-gray-300 whitespace-pre-wrap">{currentWorkflow.currentContent}</p>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {/* Definition */}
+                <div>
+                  <h4 className="text-sm font-medium text-purple-300 mb-2 uppercase tracking-wide">Definition</h4>
+                  <div className="bg-slate-800/50 rounded-lg p-4 border border-slate-700">
+                    <p className="text-gray-300 leading-relaxed">
+                      {currentWorkflow.currentContent.definition}
+                    </p>
+                  </div>
+                </div>
+
+                {/* LinkedIn Post */}
+                <div>
+                  <h4 className="text-sm font-medium text-blue-300 mb-2 uppercase tracking-wide">LinkedIn Post</h4>
+                  <div className="bg-slate-800/50 rounded-lg p-4 border border-slate-700">
+                    <p className="text-gray-300 whitespace-pre-wrap font-sans">
+                      {currentWorkflow.currentContent.linkedinPost}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Image Prompt & Image */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <h4 className="text-sm font-medium text-pink-300 mb-2 uppercase tracking-wide">Image Prompt</h4>
+                    <div className="bg-slate-800/50 rounded-lg p-4 border border-slate-700 h-full">
+                      <p className="text-gray-400 italic text-sm">
+                        {currentWorkflow.currentContent.imagePrompt}
+                      </p>
+                    </div>
+                  </div>
+
+                  {currentWorkflow.currentContent.imageUrl && (
+                    <div>
+                      <h4 className="text-sm font-medium text-green-300 mb-2 uppercase tracking-wide">Generated Image</h4>
+                      <div className="rounded-lg overflow-hidden border border-slate-700">
+                        <img
+                          src={currentWorkflow.currentContent.imageUrl}
+                          alt="Generated AI Art"
+                          className="w-full h-auto object-cover"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
@@ -430,8 +478,8 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({ workflowId, allo
         >
           <Background color="#374151" gap={20} size={1} />
           <Controls className="bg-slate-800 border border-slate-700 rounded-lg shadow-xl [&>button]:bg-slate-800 [&>button]:border-slate-700 [&>button]:text-gray-300 [&>button:hover]:bg-slate-700" />
-          <MiniMap 
-            style={{ backgroundColor: '#1e293b' }} 
+          <MiniMap
+            style={{ backgroundColor: '#1e293b' }}
             className="bg-slate-800 border border-slate-700 rounded-lg"
             nodeColor={(node) => {
               if (node.data?.status === 'completed') return '#22c55e';

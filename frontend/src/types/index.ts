@@ -158,7 +158,7 @@ export interface Workflow {
   maxCycles: number;
   // Added to align with UI expectations
   topic: string;
-  currentContent?: string;
+  currentContent?: string | ContentPackage;
   agentStatus: Record<AgentType, AgentStatus>;
   contentVersions: ContentVersion[];
   humanReviewRequired: boolean;
