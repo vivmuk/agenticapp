@@ -15,7 +15,7 @@ const prisma = new PrismaClient();
 const createVeniceClient = (model: string = 'qwen-2.5-72b-instruct') => {
   return new VeniceAPIClient({
     apiKey: process.env.VENICE_API_KEY!,
-    baseURL: process.env.VENICE_BASE_URL!,
+    baseURL: process.env.VENICE_BASE_URL || 'https://api.venice.ai/api/v1',
     model,
     temperature: 0.8,
     topP: 0.9,
