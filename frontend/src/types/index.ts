@@ -160,18 +160,34 @@ export interface Workflow {
   topic: string;
   currentContent?: string | ContentPackage;
   agentStatus: Record<AgentType, AgentStatus>;
+  agentResponses?: AgentResponse[]; // Chat history
   contentVersions: ContentVersion[];
   humanReviewRequired: boolean;
   humanReviewProvided: boolean;
-  humanReviewFeedback?: string;
-  finalQualityScore?: number;
+
+export interface AgentResponse {
+  id: string;
+  workflowRunId: string;
+  agentType: AgentType;
+  cycleNumber: number;
+  input?: any;
+  output: any;
+  success: boolean;
+  errorMessage?: string;
+  executionTime?: number;
+  tokensUsed?: number;
   createdAt: Date;
   updatedAt: Date;
-  startedAt?: Date;
-  completedAt?: Date;
-  errorMessage?: string;
-  metadata?: Record<string, any>;
-  humanReview?: HumanReview;
+}
+humanReviewFeedback ?: string;
+finalQualityScore ?: number;
+createdAt: Date;
+updatedAt: Date;
+startedAt ?: Date;
+completedAt ?: Date;
+errorMessage ?: string;
+metadata ?: Record<string, any>;
+humanReview ?: HumanReview;
 }
 
 export interface WorkflowStartInput {

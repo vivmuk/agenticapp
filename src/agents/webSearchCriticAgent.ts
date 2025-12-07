@@ -4,9 +4,11 @@ import VeniceAPIClient from '../services/veniceApiClient';
 import logger from '../utils/logger';
 import { z } from 'zod';
 
+import { PrismaClient } from '@prisma/client';
+
 export class WebSearchCriticAgent extends AgentBase<WebSearchInput, AccuracyCritique> {
-  constructor(veniceClient: VeniceAPIClient) {
-    super(AgentType.WEB_SEARCH_CRITIC, veniceClient);
+  constructor(veniceClient: VeniceAPIClient, prisma: PrismaClient) {
+    super(AgentType.WEB_SEARCH_CRITIC, veniceClient, prisma);
   }
 
   async execute(input: WebSearchInput, workflowState: WorkflowState): Promise<AccuracyCritique> {

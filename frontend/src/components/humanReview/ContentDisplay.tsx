@@ -4,24 +4,15 @@ import { HumanReviewWithComments } from '@/stores/humanReviewStore';
 import { ContentPackage } from '@/types';
 
 interface ContentDisplayProps {
-  review: HumanReviewWithComments;
+  content: ContentPackage;
+  review?: HumanReviewWithComments;
   onEdit?: (contentType: 'definition' | 'linkedinPost' | 'imagePrompt', content: string) => void;
 }
 
-const ContentDisplay: React.FC<ContentDisplayProps> = ({ review, onEdit }) => {
+const ContentDisplay: React.FC<ContentDisplayProps> = ({ content, review, onEdit }) => {
   const [activeContent, setActiveContent] = useState<'definition' | 'linkedinPost' | 'image'>('definition');
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState('');
-
-  // This would come from the workflow data
-  const mockContent: ContentPackage = {
-    definition: "Artificial Intelligence (AI) refers to the simulation of human intelligence in machines that are programmed to think and learn. It encompasses various subfields including machine learning, neural networks, and natural language processing.",
-    linkedinPost: "🚀 Exciting developments in AI! Machine learning models are becoming increasingly sophisticated, enabling breakthrough applications across healthcare, finance, and creative industries. What's your take on the future of AI? #AI #MachineLearning #Innovation",
-    imagePrompt: "A futuristic AI brain with glowing neural networks, digital art style, blue and purple color scheme, high-tech aesthetic",
-    imageUrl: "https://example.com/ai-image.jpg",
-    keyClaims: [],
-    metadata: {},
-  };
 
   const handleEdit = (contentType: 'definition' | 'linkedinPost' | 'imagePrompt') => {
     const content = mockContent[contentType];
@@ -58,7 +49,7 @@ const ContentDisplay: React.FC<ContentDisplayProps> = ({ review, onEdit }) => {
             ) : (
               <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-md">
                 <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
-                  {mockContent.definition}
+                  {content.definition}
                 </p>
               </div>
             )}
@@ -79,7 +70,7 @@ const ContentDisplay: React.FC<ContentDisplayProps> = ({ review, onEdit }) => {
             ) : (
               <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-md border border-blue-200 dark:border-blue-800">
                 <p className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
-                  {mockContent.linkedinPost}
+                  {content.linkedinPost}
                 </p>
               </div>
             )}
@@ -90,17 +81,17 @@ const ContentDisplay: React.FC<ContentDisplayProps> = ({ review, onEdit }) => {
         return (
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Generated Image</h3>
-            {mockContent.imageUrl ? (
+            {content.imageUrl ? (
               <div className="space-y-4">
                 <img
-                  src={mockContent.imageUrl}
+                  src={content.imageUrl}
                   alt="Generated content"
                   className="w-full max-w-md rounded-lg shadow-lg"
                 />
                 <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-md">
                   <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Image Prompt:</p>
                   <p className="text-gray-700 dark:text-gray-300 italic">
-                    {mockContent.imagePrompt}
+                    {content.imagePrompt}
                   </p>
                 </div>
               </div>
@@ -133,11 +124,10 @@ const ContentDisplay: React.FC<ContentDisplayProps> = ({ review, onEdit }) => {
           <button
             key={tab.key}
             onClick={() => setActiveContent(tab.key as any)}
-            className={`flex items-center space-x-2 px-4 py-2 text-sm font-medium transition-colors ${
-              activeContent === tab.key
-                ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50 dark:bg-blue-900/20'
-                : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
-            }`}
+            className={`flex items-center space-x-2 px-4 py-2 text-sm font-medium transition-colors ${activeContent === tab.key
+              ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50 dark:bg-blue-900/20'
+              : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+              }`}
           >
             <span>{tab.icon}</span>
             <span>{tab.label}</span>
@@ -187,7 +177,7 @@ const ContentDisplay: React.FC<ContentDisplayProps> = ({ review, onEdit }) => {
           <div>
             <span className="text-gray-500 dark:text-gray-400">Current Quality Score:</span>
             <span className="ml-2 font-medium text-gray-900 dark:text-white">
-              {review.qualityRating || 'Not rated'}/10
+              {review?.qualityRating || 'Not rated'}/10
             </span>
           </div>
           <div>
@@ -199,13 +189,13 @@ const ContentDisplay: React.FC<ContentDisplayProps> = ({ review, onEdit }) => {
           <div>
             <span className="text-gray-500 dark:text-gray-400">Content Length:</span>
             <span className="ml-2 font-medium text-gray-900 dark:text-white">
-              {mockContent.definition.length} characters
+              {content.definition.length} characters
             </span>
           </div>
           <div>
             <span className="text-gray-500 dark:text-gray-400">Last Modified:</span>
             <span className="ml-2 font-medium text-gray-900 dark:text-white">
-              {review.updatedAt ? new Date(review.updatedAt).toLocaleString() : 'Unknown'}
+              {review?.updatedAt ? new Date(review.updatedAt).toLocaleString() : 'Unknown'}
             </span>
           </div>
         </div>

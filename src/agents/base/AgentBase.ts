@@ -1,16 +1,17 @@
+import { PrismaClient } from '@prisma/client';
 import { AgentType, AgentResponse, WorkflowState } from '../../types';
 import logger from '../../utils/logger';
 
 export abstract class AgentBase<TInput, TOutput> {
   protected agentType: AgentType;
   protected veniceClient: any;
+  protected prisma: PrismaClient;
 
-  constructor(agentType: AgentType, veniceClient: any) {
+  constructor(agentType: AgentType, veniceClient: any, prisma: PrismaClient) {
     this.agentType = agentType;
     this.veniceClient = veniceClient;
+    this.prisma = prisma;
   }
-
-  abstract execute(input: TInput, workflowState: WorkflowState): Promise<TOutput>;
 
   protected async logAgentExecution(
     workflowId: string,
@@ -21,20 +22,35 @@ export abstract class AgentBase<TInput, TOutput> {
     tokensUsed?: number,
     error?: string
   ): Promise<void> {
-    const agentResponse: Partial<AgentResponse> = {
-      id: this.generateId(),
-      workflowRunId: workflowId,
-      agentType: this.agentType,
-      cycleNumber,
-      input,
-      output,
-      success: !error,
-      errorMessage: error,
-      executionTime,
-      tokensUsed,
-    };
+    try {
+      await this.prisma.agentResponse.create({
+        data: {
+          workflowRunId: workflowId,
+          agentType: this.agentType,
+          cycleNumber,
+          input: input as any,
+          output: output as any,
+          success: !error,
+          errorMessage: error,
+          executionTime,
+          tokensUsed,
+        },
+      });
 
-    logger.info('Agent execution completed', {
+      logger.info('Agent execution saved to database', {
+        agentType: this.agentType,
+        workflowId,
+        cycleNumber,
+      });
+    } catch (err) {
+      logger.error('Failed to save agent execution to database', {
+        error: (err as Error).message,
+        agentType: this.agentType,
+        workflowId,
+      });
+    }
+
+    logger.info('Agent execution logs', {
       agentType: this.agentType,
       workflowId,
       cycleNumber,

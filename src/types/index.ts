@@ -210,6 +210,7 @@ export interface WorkflowState {
   currentAccuracyCritique?: AccuracyCritique;
   currentQualityCritique?: QualityCritique;
   agentStatus: Record<string, AgentStatus>;
+  agentResponses?: AgentResponse[];
   startedAt: Date;
   completedAt?: Date;
 }

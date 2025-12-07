@@ -26,9 +26,9 @@ export class WorkflowManager {
   constructor(veniceClient: VeniceAPIClient, prisma: PrismaClient) {
     this.prisma = prisma;
     this.veniceClient = veniceClient;
-    this.contentGenerator = new ContentGeneratorAgent(veniceClient);
-    this.webSearchCritic = new WebSearchCriticAgent(veniceClient);
-    this.qualityCritic = new QualityCriticAgent(veniceClient);
+    this.contentGenerator = new ContentGeneratorAgent(veniceClient, prisma);
+    this.webSearchCritic = new WebSearchCriticAgent(veniceClient, prisma);
+    this.qualityCritic = new QualityCriticAgent(veniceClient, prisma);
   }
 
   async startWorkflow(input: WorkflowStartInput, options?: { runAsync?: boolean }): Promise<WorkflowState> {
@@ -424,6 +424,7 @@ export class WorkflowManager {
         [AgentType.WEB_SEARCH_CRITIC]: (dbWorkflow.agentStatus as any)?.[AgentType.WEB_SEARCH_CRITIC] || { status: 'idle' },
         [AgentType.QUALITY_CRITIC]: (dbWorkflow.agentStatus as any)?.[AgentType.QUALITY_CRITIC] || { status: 'idle' },
       },
+      agentResponses: dbWorkflow.agentResponses || [],
       startedAt: dbWorkflow.startedAt,
       completedAt: dbWorkflow.completedAt,
     };

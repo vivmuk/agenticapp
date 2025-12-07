@@ -4,9 +4,11 @@ import VeniceAPIClient from '../services/veniceApiClient';
 import logger from '../utils/logger';
 import { z } from 'zod';
 
+import { PrismaClient } from '@prisma/client';
+
 export class QualityCriticAgent extends AgentBase<QualityCritiqueInput, QualityCritique> {
-  constructor(veniceClient: VeniceAPIClient) {
-    super(AgentType.QUALITY_CRITIC, veniceClient);
+  constructor(veniceClient: VeniceAPIClient, prisma: PrismaClient) {
+    super(AgentType.QUALITY_CRITIC, veniceClient, prisma);
   }
 
   async execute(input: QualityCritiqueInput, workflowState: WorkflowState): Promise<QualityCritique> {

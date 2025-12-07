@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { WorkflowCanvas } from './components/workflow/WorkflowCanvas';
+import AgentChatView from './components/workflow/AgentChatView';
 import WorkflowStartForm from './components/workflow/WorkflowStartForm';
 import HumanReviewPanel from './components/humanReview/HumanReviewPanel';
 
@@ -90,8 +90,8 @@ function App() {
               </div>
             </div>
 
-            <div className="bg-white border-2 border-gray-200 rounded-xl shadow-sm h-[600px]">
-              <WorkflowCanvas workflowId={activeWorkflowId} allowInlineStart={false} />
+            <div className="bg-white border-2 border-gray-200 rounded-xl shadow-sm h-[800px] overflow-hidden">
+              <AgentChatView workflowId={activeWorkflowId} />
             </div>
           </div>
         )}

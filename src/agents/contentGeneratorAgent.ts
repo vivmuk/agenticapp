@@ -4,9 +4,11 @@ import VeniceAPIClient from '../services/veniceApiClient';
 import logger from '../utils/logger';
 import { z } from 'zod';
 
+import { PrismaClient } from '@prisma/client';
+
 export class ContentGeneratorAgent extends AgentBase<ContentGenerationInput, ContentPackage> {
-  constructor(veniceClient: VeniceAPIClient) {
-    super(AgentType.CONTENT_GENERATOR, veniceClient);
+  constructor(veniceClient: VeniceAPIClient, prisma: PrismaClient) {
+    super(AgentType.CONTENT_GENERATOR, veniceClient, prisma);
   }
 
   async execute(input: ContentGenerationInput, workflowState: WorkflowState): Promise<ContentPackage> {
