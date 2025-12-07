@@ -165,6 +165,17 @@ export interface Workflow {
   humanReviewRequired: boolean;
   humanReviewProvided: boolean;
 
+  humanReviewFeedback?: string;
+  finalQualityScore?: number;
+  createdAt: Date;
+  updatedAt: Date;
+  startedAt?: Date;
+  completedAt?: Date;
+  errorMessage?: string;
+  metadata?: Record<string, any>;
+  humanReview?: HumanReview;
+}
+
 export interface AgentResponse {
   id: string;
   workflowRunId: string;
@@ -178,16 +189,6 @@ export interface AgentResponse {
   tokensUsed?: number;
   createdAt: Date;
   updatedAt: Date;
-}
-humanReviewFeedback ?: string;
-finalQualityScore ?: number;
-createdAt: Date;
-updatedAt: Date;
-startedAt ?: Date;
-completedAt ?: Date;
-errorMessage ?: string;
-metadata ?: Record<string, any>;
-humanReview ?: HumanReview;
 }
 
 export interface WorkflowStartInput {

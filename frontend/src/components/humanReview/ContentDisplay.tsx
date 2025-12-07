@@ -14,9 +14,63 @@ const ContentDisplay: React.FC<ContentDisplayProps> = ({ content, review, onEdit
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState('');
 
+  const handleDownload = () => {
+    const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Generated Content</title>
+  <style>
+    body { font-family: system-ui, -apple-system, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+    h1 { color: #1a202c; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; }
+    h2 { color: #2d3748; margin-top: 2rem; }
+    .content-box { background: #f7fafc; padding: 1.5rem; border-radius: 0.5rem; border: 1px solid #edf2f7; }
+    .image-container { margin-top: 1rem; }
+    img { max-width: 100%; border-radius: 0.5rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+    .prompt { color: #718096; font-style: italic; margin-top: 0.5rem; }
+  </style>
+</head>
+<body>
+  <h1>Content Output</h1>
+  
+  <h2>Definition</h2>
+  <div class="content-box">
+    ${content.definition}
+  </div>
+
+  <h2>LinkedIn Post</h2>
+  <div class="content-box">
+    ${content.linkedinPost.replace(/\n/g, '<br>')}
+  </div>
+
+  <h2>Generated Image</h2>
+  <div class="image-container">
+    ${content.imageUrl ? `<img src="${content.imageUrl}" alt="Generated Image" />` : '<p>No image generated</p>'}
+    <p class="prompt">Prompt: ${content.imagePrompt}</p>
+  </div>
+</body>
+</html>`;
+
+    const blob = new Blob([htmlContent], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `content-${new Date().toISOString().slice(0, 10)}.html`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   const handleEdit = (contentType: 'definition' | 'linkedinPost' | 'imagePrompt') => {
-    const content = mockContent[contentType];
-    setEditContent(content);
+    let value = '';
+    // Map the content types correctly
+    if (contentType === 'definition') value = content.definition;
+    if (contentType === 'linkedinPost') value = content.linkedinPost;
+    if (contentType === 'imagePrompt') value = content.imagePrompt;
+
+    setEditContent(value);
     setIsEditing(true);
   };
 
@@ -115,24 +169,37 @@ const ContentDisplay: React.FC<ContentDisplayProps> = ({ content, review, onEdit
       className="space-y-6"
     >
       {/* Content Type Tabs */}
-      <div className="flex space-x-1 border-b border-gray-200 dark:border-gray-700">
-        {[
-          { key: 'definition', label: 'Definition', icon: '📝' },
-          { key: 'linkedinPost', label: 'LinkedIn Post', icon: '💼' },
-          { key: 'image', label: 'Image', icon: '🖼️' },
-        ].map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveContent(tab.key as any)}
-            className={`flex items-center space-x-2 px-4 py-2 text-sm font-medium transition-colors ${activeContent === tab.key
-              ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50 dark:bg-blue-900/20'
-              : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
-              }`}
-          >
-            <span>{tab.icon}</span>
-            <span>{tab.label}</span>
-          </button>
-        ))}
+      <div className="flex items-center justify-between border-b border-gray-200 dark:border-gray-700">
+        <div className="flex space-x-1">
+          {[
+            { key: 'definition', label: 'Definition', icon: '📝' },
+            { key: 'linkedinPost', label: 'LinkedIn Post', icon: '💼' },
+            { key: 'image', label: 'Image', icon: '🖼️' },
+          ].map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveContent(tab.key as any)}
+              className={`flex items-center space-x-2 px-4 py-2 text-sm font-medium transition-colors ${activeContent === tab.key
+                ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50 dark:bg-blue-900/20'
+                : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                }`}
+            >
+              <span>{tab.icon}</span>
+              <span>{tab.label}</span>
+            </button>
+          ))}
+        </div>
+
+        <button
+          onClick={handleDownload}
+          className="flex items-center space-x-1 px-3 py-1.5 mr-2 text-sm text-gray-600 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 transition-colors"
+          title="Download as HTML"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+          <span>Download</span>
+        </button>
       </div>
 
       {/* Content Display */}

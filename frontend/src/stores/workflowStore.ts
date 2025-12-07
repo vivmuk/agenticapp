@@ -1,5 +1,6 @@
- import { create } from 'zustand';
+import { create } from 'zustand';
 import { Workflow, WorkflowStatus, AgentType } from '@/types';
+import { workflowService } from '@/services/apiService';
 
 // React Flow types
 export interface WorkflowNode {
@@ -35,12 +36,16 @@ interface WorkflowState extends VisualizationState {
   // Current workflow data
   currentWorkflow: Workflow | null;
   workflows: Workflow[];
-  
+
   // UI state
   isRealTimeConnected: boolean;
   darkMode: boolean;
   viewMode: 'canvas' | 'list';
-  
+  isLoading: boolean;
+  error: string | null;
+  isPolling: boolean;
+  pollingInterval?: any;
+
   // Actions
   setCurrentWorkflow: (workflow: Workflow | null) => void;
   setWorkflows: (workflows: Workflow[]) => void;
@@ -50,16 +55,21 @@ interface WorkflowState extends VisualizationState {
   setRealTimeConnected: (connected: boolean) => void;
   setDarkMode: (darkMode: boolean) => void;
   setViewMode: (mode: 'canvas' | 'list') => void;
-  
+
   // WebSocket actions
   connectWebSocket: () => void;
   disconnectWebSocket: () => void;
-  
+
   // Workflow actions
   startWorkflow: (workflowId: string) => void;
   pauseWorkflow: (workflowId: string) => void;
   resetWorkflow: (workflowId: string) => void;
   provideHumanReview: (workflowId: string, feedback: string) => void;
+
+  // Data actions
+  fetchWorkflow: (workflowId: string) => Promise<void>;
+  startPolling: (workflowId: string) => void;
+  stopPolling: () => void;
 }
 
 const generateNodes = (workflow: Workflow): WorkflowNode[] => {
@@ -73,7 +83,7 @@ const generateNodes = (workflow: Workflow): WorkflowNode[] => {
   // Add cycle nodes
   for (let cycle = 1; cycle <= workflow.maxCycles; cycle++) {
     const yOffset = (cycle - 1) * 200;
-    
+
     agentTypes.forEach((agentType, index) => {
       const node: WorkflowNode = {
         id: `${agentType}-cycle-${cycle}`,
@@ -185,7 +195,12 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
   selectedNodeId: null,
   isRealTimeConnected: false,
   darkMode: false,
+
   viewMode: 'canvas',
+  isLoading: false,
+  error: null,
+  isPolling: false,
+  pollingInterval: undefined,
 
   // Actions
   setCurrentWorkflow: (workflow) => {
@@ -208,7 +223,7 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
     if (currentWorkflow) {
       const updatedWorkflow = { ...currentWorkflow, ...workflowUpdate };
       set({ currentWorkflow: updatedWorkflow });
-      
+
       // Regenerate visualization
       const nodes = generateNodes(updatedWorkflow);
       const edges = generateEdges(updatedWorkflow);
@@ -264,5 +279,57 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
   provideHumanReview: (workflowId, feedback) => {
     // API call to provide human review
     console.log('Providing human review for workflow:', workflowId, feedback);
+  },
+
+  fetchWorkflow: async (workflowId) => {
+    const { isPolling, currentWorkflow } = get();
+    // Only show loading for initial fetch if not already populated
+    if (!isPolling && !currentWorkflow) {
+      set({ isLoading: true });
+    }
+    set({ error: null });
+
+    try {
+      const response = await workflowService.getWorkflow(workflowId);
+      if (response.success && response.data) {
+        const payload: any = response.data;
+        const workflowData = payload.workflow || payload;
+        // Ensure ID is present
+        const workflow = {
+          id: workflowData.workflowId || workflowData.id || workflowId,
+          ...workflowData,
+        };
+        get().setCurrentWorkflow(workflow);
+      }
+    } catch (error) {
+      console.error('Failed to fetch workflow:', error);
+      set({ error: (error as Error).message });
+    } finally {
+      if (!get().isPolling) {
+        set({ isLoading: false });
+      }
+    }
+  },
+
+  startPolling: (workflowId) => {
+    const { stopPolling, fetchWorkflow } = get();
+    stopPolling();
+
+    set({ isPolling: true });
+    fetchWorkflow(workflowId);
+
+    const interval = setInterval(() => {
+      fetchWorkflow(workflowId);
+    }, 2000);
+
+    set({ pollingInterval: interval });
+  },
+
+  stopPolling: () => {
+    const { pollingInterval } = get();
+    if (pollingInterval) {
+      clearInterval(pollingInterval);
+    }
+    set({ isPolling: false, pollingInterval: undefined });
   },
 }));

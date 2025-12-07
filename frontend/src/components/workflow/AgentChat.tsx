@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AgentType, AgentResponse, Workflow } from '@/types';
 import { format } from 'date-fns';
-import useWorkflowStore from '@/stores/workflowStore';
+import { useWorkflowStore } from '@/stores/workflowStore';
 import { WorkflowStatus } from '@/types';
 
 interface AgentChatProps {

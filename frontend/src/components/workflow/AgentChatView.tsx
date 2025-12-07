@@ -1,7 +1,7 @@
 import React from 'react';
 import AgentChat from './AgentChat';
 import ContentDisplay from '../humanReview/ContentDisplay';
-import useWorkflowStore from '@/stores/workflowStore';
+import { useWorkflowStore } from '@/stores/workflowStore';
 import { ContentPackage } from '@/types';
 
 interface AgentChatViewProps {
