@@ -12,7 +12,7 @@ const router = express.Router();
 const prisma = new PrismaClient();
 
 // Factory function to create Venice client with specified model
-const createVeniceClient = (model: string = 'qwen3-4b') => {
+const createVeniceClient = (model: string = 'qwen-2.5-72b-instruct') => {
   return new VeniceAPIClient({
     apiKey: process.env.VENICE_API_KEY!,
     baseURL: process.env.VENICE_BASE_URL!,
@@ -403,7 +403,7 @@ router.delete('/:id', async (req, res) => {
 router.get('/review-queue', async (req, res) => {
   try {
     const { priority, assignedTo } = req.query;
-    
+
     const whereClause: any = {};
     if (priority) {
       whereClause.priority = priority as ReviewPriority;

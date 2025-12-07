@@ -117,6 +117,27 @@ const AgentChat: React.FC<AgentChatProps> = ({ workflowId }) => {
                             Waiting for agents to start...
                         </div>
                     )}
+
+                    {/* Running Agents Indicator */}
+                    {currentWorkflow?.agentStatus && Object.entries(currentWorkflow.agentStatus)
+                        .filter(([_, status]) => status.status === 'running')
+                        .map(([agentType]) => (
+                            <motion.div
+                                key={`running-${agentType}`}
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -10 }}
+                                className={`border-l-4 ${getAgentColor(agentType as AgentType)} bg-slate-800/20 rounded-r-lg p-4 animate-pulse`}
+                            >
+                                <div className="flex justify-between items-center">
+                                    <span className={`font-bold ${getAgentColor(agentType as AgentType).split(' ')[1]}`}>
+                                        {getAgentName(agentType as AgentType)}
+                                    </span>
+                                    <span className="text-xs text-gray-500 italic">Thinking...</span>
+                                </div>
+                            </motion.div>
+                        ))
+                    }
                 </AnimatePresence>
                 <div ref={bottomRef} />
             </div>

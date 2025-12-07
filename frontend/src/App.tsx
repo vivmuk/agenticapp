@@ -44,12 +44,7 @@ function App() {
             >
               Orchestration
             </button>
-            <button
-              onClick={() => setActiveView('review')}
-              className={`tab-item ${activeView === 'review' ? 'active' : ''}`}
-            >
-              Human Review
-            </button>
+            {/* Human Review Tab Removed */}
           </div>
         </div>
       </nav>
