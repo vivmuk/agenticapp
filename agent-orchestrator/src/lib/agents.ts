@@ -140,10 +140,10 @@ export async function writeDraftStream(topic: string, plan: string[], researchDa
 // 4. Critic Agent (Tougher, strict JSON)
 export async function critiqueDraft(draft: string) {
     const messages: VeniceMessage[] = [
-        { role: 'system', content: 'You are a Brutal Senior Editor. You hate mediocrity. You demand viral excellence.' },
+        { role: 'system', content: 'You are a Social Media Expert. Provide constructive, actionable feedback to improve engagement.' },
         {
             role: 'user',
-            content: `Critique this draft. Be harsh.
+            content: `Critique this draft. Be constructive and helpful.
       
       Draft:
       ${draft}
@@ -226,17 +226,18 @@ async function generateImagePrompt(postContent: string) {
     const promptParams: VeniceChatRequest = {
         model: 'grok-41-fast', // Intelligent model for prompt engineering
         messages: [
-            { role: 'system', content: 'You are an Expert Art Director specializing in Retro Futurism.' },
+            { role: 'system', content: 'You are an Expert Art Director specializing in Whimsical Watercolor Art.' },
             {
                 role: 'user', content: `Base on the following post content:
             "${postContent.substring(0, 1000)}..."
             
-            Create a "Retro Futurism 1950s style" image prompt using this EXACT structure:
+            Create a "Whimsical Watercolor style" image prompt using this EXACT structure:
             
-            **WORK SURFACE:** A retro-futuristic scene in 1950s style.
-            **LAYOUT:** Optimistic, clean composition. Futuristic elements with 1950s design aesthetic.
-            **COMPONENTS:** [Extract 3-4 key visual elements from the post and style them as retro-futuristic tech/scenery]
-            **STYLE:** 1950s retro-futurism aesthetic. Atomic age optimism. Pastel colors (mint green, pink, sky blue).
+            **WORK SURFACE:** A soft, textured watercolor paper background.
+            **LAYOUT:** Flowing, organic composition. Dreamy and whimsical atmosphere.
+            **COMPONENTS:** [Extract 3-4 key visual elements from the post and depict them in a soft, hand-painted watercolor style]
+            **STYLE:** Whimsical watercolor, soft pastels, bleeding edges, gentle strokes, artistic, dreamy.
+            **CONSTRAINTS:** NO TEXT, NO WRITING, NO LETTERS, NO SIGNATURES on the image.
             
             Constraint: Return ONLY the prompt text. Max 1500 characters.` }
         ],
@@ -261,7 +262,7 @@ export async function generateImage(postContent: string) {
 
     // Step 2: Generate Image with Qwen
     const imageRequest = {
-        model: 'qwen-image',
+        model: 'z-image-turbo',
         prompt: imagePrompt,
         negative_prompt: "dark, gritty, dystopian, text, words, letters, signature, watermark, logo, caption, writing, typography, speech bubble, label, title, messy, cluttered, decay",
         width: 1024,
