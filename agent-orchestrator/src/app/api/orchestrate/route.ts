@@ -6,14 +6,15 @@ import {
     writeDraftStream,
     critiqueDraft,
     finalizePostStream,
-    generateImage
+    generateImage,
+    summarizePost
 } from '@/lib/agents';
 
 export const runtime = 'nodejs';
 
 export async function POST(req: Request) {
     try {
-        const { topic } = await req.json();
+        const { topic, tone } = await req.json();
         const encoder = new TextEncoder();
 
         const stream = new ReadableStream({
@@ -142,7 +143,7 @@ export async function POST(req: Request) {
                         sendEvent('step_start', { step: stepId, name: roundName });
                         sendLog(`[${roundName}] Drafting iteration ${i + 1}...`);
 
-                        const draftRes = await writeDraftStream(topic, plan, fullResearch, previousContext);
+                        const draftRes = await writeDraftStream(topic, plan, fullResearch, previousContext, tone);
                         const draftReader = draftRes.body?.getReader();
                         let currentDraft = '';
                         buffer = '';
@@ -237,11 +238,18 @@ export async function POST(req: Request) {
                     sendLog(`[Finalizer] Text ready.`);
                     sendEvent('step_update', { step: 'Five', data: { finalPost }, status: 'completed' });
 
+                    // Strip <think> tags for clean output
+                    const cleanFinalPost = finalPost.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
+
                     // --- Step 6: Visualizer (Image Gen) ---
                     sendEvent('step_start', { step: 'Six', name: 'Visualizer' });
-                    sendLog(`[Visualizer] Generating watercolor art...`);
+                    sendLog(`[Visualizer] Summarizing post for image context...`);
 
-                    const imageUrl = await generateImage(finalPost);
+                    const postSummary = await summarizePost(cleanFinalPost);
+                    sendLog(`[Visualizer] Summary: ${postSummary.substring(0, 120)}...`);
+                    sendLog(`[Visualizer] Generating watercolor art with seedream-v4...`);
+
+                    const imageUrl = await generateImage(cleanFinalPost, postSummary);
 
                     if (imageUrl) {
                         sendLog(`[Visualizer] Image generated successfully.`);
@@ -251,8 +259,6 @@ export async function POST(req: Request) {
                         sendEvent('step_update', { step: 'Six', status: 'failed' });
                     }
 
-                    // Final payload with everything, stripping <think> tags for clean output
-                    const cleanFinalPost = finalPost.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
                     sendEvent('workflow_complete', { finalPost: cleanFinalPost, imageUrl });
 
                 } catch (err) {

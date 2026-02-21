@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { Play, Loader2, Terminal, FileText, Search, PenTool, MessageSquare, Star, Image as ImageIcon, CheckCircle2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Play, Loader2, Terminal, FileText, Search, PenTool, MessageSquare, Star, Image as ImageIcon, CheckCircle2, ChevronDown, ChevronUp, Share2, Copy, Check, Lightbulb } from 'lucide-react';
 import { clsx } from 'clsx';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -15,14 +15,35 @@ interface AgentStepData {
   streamContent?: string;
 }
 
+type Tone = 'Professional' | 'Conversational' | 'Inspirational' | 'Contrarian';
+
+const TONES: { value: Tone; label: string; description: string }[] = [
+  { value: 'Professional', label: 'Professional', description: 'Data-driven, authoritative' },
+  { value: 'Conversational', label: 'Conversational', description: 'Casual, relatable, direct' },
+  { value: 'Inspirational', label: 'Inspirational', description: 'Motivating, story-driven' },
+  { value: 'Contrarian', label: 'Contrarian', description: 'Challenges conventional wisdom' },
+];
+
+const TOPIC_SUGGESTIONS = [
+  'The future of AI agents in the workplace',
+  'Why most startups fail at product-market fit',
+  'The hidden cost of remote work culture',
+  'What nobody tells you about raising Series A',
+  'How sleep deprivation is killing executive performance',
+  'The counterintuitive truth about productivity systems',
+];
+
+// Total steps in the workflow
+const TOTAL_STEPS = 9; // Planner, ResearchA, ResearchB, Writer x3, Critic x3... simplified to key milestones
+const STEP_ORDER = ['One', 'Two', 'Two_B', 'Three', 'Four', 'Three_Rev', 'Four_Rev', 'Three_Rev_2', 'Four_Rev_2', 'Five', 'Six'];
+
 // --- Components ---
 
 function AgentCard({ stepData, isActive }: { stepData: AgentStepData, isActive: boolean }) {
   const isCompleted = stepData.status === 'completed';
   const isRunning = stepData.status === 'running';
-  const [isExpanded, setIsExpanded] = useState(isActive || isCompleted); // Auto-expand active or new
+  const [isExpanded, setIsExpanded] = useState(isActive || isCompleted);
 
-  // Auto-expand when status changes to running
   useEffect(() => {
     if (isRunning) setIsExpanded(true);
   }, [isRunning]);
@@ -105,7 +126,7 @@ function AgentCard({ stepData, isActive }: { stepData: AgentStepData, isActive: 
                   </div>
                   {stepData.data.review.critique && (
                     <p className="text-xs italic text-zinc-400 bg-zinc-950/50 p-2 rounded">
-                      "{stepData.data.review.critique}"
+                      &quot;{stepData.data.review.critique}&quot;
                     </p>
                   )}
                 </div>
@@ -136,12 +157,78 @@ function ScoreBox({ label, score }: { label: string, score: number }) {
   );
 }
 
+function ProgressBar({ steps, isGenerating }: { steps: Record<string, AgentStepData>, isGenerating: boolean }) {
+  const completedCount = Object.values(steps).filter(s => s.status === 'completed').length;
+  const totalVisible = Math.max(Object.keys(steps).length, 1);
+  const percentage = isGenerating
+    ? Math.min(Math.round((completedCount / STEP_ORDER.length) * 100), 95)
+    : completedCount > 0 ? 100 : 0;
+
+  if (!isGenerating && completedCount === 0) return null;
+
+  return (
+    <div className="mb-4 space-y-1">
+      <div className="flex justify-between text-[10px] font-mono text-zinc-500 uppercase tracking-wider">
+        <span>{isGenerating ? 'Processing...' : 'Complete'}</span>
+        <span>{percentage}%</span>
+      </div>
+      <div className="h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+        <motion.div
+          className={clsx("h-full rounded-full", isGenerating ? "bg-blue-500" : "bg-emerald-500")}
+          initial={{ width: 0 }}
+          animate={{ width: `${percentage}%` }}
+          transition={{ duration: 0.5, ease: 'easeOut' }}
+        />
+      </div>
+    </div>
+  );
+}
+
+function CopyButton({ text, label = 'Copy' }: { text: string, label?: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <button
+      onClick={handleCopy}
+      className="flex items-center gap-1.5 text-[10px] uppercase font-bold tracking-widest text-emerald-500 hover:text-emerald-300 transition-colors"
+    >
+      {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+      {copied ? 'Copied!' : label}
+    </button>
+  );
+}
+
+function LinkedInShareButton({ text }: { text: string }) {
+  const handleShare = () => {
+    const encoded = encodeURIComponent(text);
+    window.open(`https://www.linkedin.com/feed/?shareActive=true&text=${encoded}`, '_blank');
+  };
+
+  return (
+    <button
+      onClick={handleShare}
+      className="flex items-center gap-1.5 text-[10px] uppercase font-bold tracking-widest text-blue-400 hover:text-blue-300 transition-colors"
+    >
+      <Share2 className="w-3 h-3" />
+      Share on LinkedIn
+    </button>
+  );
+}
+
 export default function Home() {
   const [topic, setTopic] = useState('');
+  const [tone, setTone] = useState<Tone>('Professional');
   const [isGenerating, setIsGenerating] = useState(false);
   const [rawLogs, setRawLogs] = useState<string[]>([]);
   const [steps, setSteps] = useState<Record<string, AgentStepData>>({});
   const [finalResult, setFinalResult] = useState<{ post: string, image?: string } | null>(null);
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const logRef = useRef<HTMLDivElement>(null);
@@ -162,12 +249,13 @@ export default function Home() {
     setRawLogs([]);
     setSteps({});
     setFinalResult(null);
+    setShowSuggestions(false);
 
     try {
       const response = await fetch('/api/orchestrate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ topic }),
+        body: JSON.stringify({ topic, tone }),
       });
 
       if (!response.body) throw new Error('No stream');
@@ -183,9 +271,8 @@ export default function Home() {
           const chunk = decoder.decode(value, { stream: true });
           buffer += chunk;
 
-          // Splits by double newline which is the standard SSE separator
           const lines = buffer.split('\n\n');
-          buffer = lines.pop() || ''; // Keep the incomplete last part in buffer
+          buffer = lines.pop() || '';
 
           for (const line of lines) {
             const trimmed = line.trim();
@@ -254,20 +341,112 @@ export default function Home() {
 
       {/* Left Column: Workflow */}
       <div className="flex flex-col h-[calc(100vh-3rem)]">
-        <header className="mb-6">
+        <header className="mb-4">
           <h1 className="text-2xl font-bold bg-gradient-to-r from-emerald-400 to-cyan-500 bg-clip-text text-transparent font-mono">Venice Agent Swarm</h1>
-          <p className="text-zinc-500 text-sm">Orchestrated AI Workflow v2.0</p>
+          <p className="text-zinc-500 text-sm">Orchestrated AI Workflow v2.1</p>
         </header>
 
-        <div className="flex-1 overflow-y-auto pr-2 space-y-4 scrollbar-thin scrollbar-thumb-zinc-800 pb-20">
+        {/* Input Area */}
+        <div className="space-y-3 pb-4 border-b border-zinc-900">
+          {/* Tone Selector */}
+          <div className="space-y-1.5">
+            <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-600">Post Tone</label>
+            <div className="grid grid-cols-4 gap-1.5">
+              {TONES.map(t => (
+                <button
+                  key={t.value}
+                  type="button"
+                  onClick={() => setTone(t.value)}
+                  disabled={isGenerating}
+                  title={t.description}
+                  className={clsx(
+                    "px-2 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wide transition-all border",
+                    tone === t.value
+                      ? "bg-emerald-900/40 border-emerald-600 text-emerald-300"
+                      : "bg-zinc-900 border-zinc-800 text-zinc-500 hover:border-zinc-600 hover:text-zinc-300"
+                  )}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Topic Input */}
+          <form onSubmit={handleSubmit} className="flex gap-2">
+            <div className="flex-1 relative">
+              <input
+                type="text"
+                value={topic}
+                onChange={(e) => setTopic(e.target.value)}
+                onFocus={() => setShowSuggestions(true)}
+                placeholder="Enter a topic for viral content..."
+                className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-3 text-zinc-100 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition-all font-mono shadow-inner pr-10"
+                disabled={isGenerating}
+              />
+              <button
+                type="button"
+                onClick={() => setShowSuggestions(!showSuggestions)}
+                disabled={isGenerating}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-600 hover:text-zinc-300 transition-colors"
+                title="Show topic suggestions"
+              >
+                <Lightbulb className="w-4 h-4" />
+              </button>
+            </div>
+            <button
+              type="submit"
+              disabled={isGenerating || !topic.trim()}
+              className="bg-emerald-600 hover:bg-emerald-500 text-white px-6 lg:px-8 py-2 rounded-lg font-medium disabled:opacity-50 transition-colors flex items-center gap-2 shadow-lg shadow-emerald-900/20"
+            >
+              {isGenerating ? <Loader2 className="w-5 h-5 animate-spin" /> : <Play className="w-5 h-5" />}
+              <span className="hidden sm:inline">Dispatch</span>
+            </button>
+          </form>
+
+          {/* Topic Suggestions */}
+          <AnimatePresence>
+            {showSuggestions && !isGenerating && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="overflow-hidden"
+              >
+                <div className="flex flex-wrap gap-1.5 pt-1">
+                  {TOPIC_SUGGESTIONS.map((suggestion) => (
+                    <button
+                      key={suggestion}
+                      type="button"
+                      onClick={() => {
+                        setTopic(suggestion);
+                        setShowSuggestions(false);
+                      }}
+                      className="text-[10px] bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-600 text-zinc-400 hover:text-zinc-200 px-2.5 py-1 rounded-full transition-all truncate max-w-[220px]"
+                    >
+                      {suggestion}
+                    </button>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* Progress bar */}
+        <div className="pt-3">
+          <ProgressBar steps={steps} isGenerating={isGenerating} />
+        </div>
+
+        <div className="flex-1 overflow-y-auto pr-2 space-y-4 scrollbar-thin scrollbar-thumb-zinc-800 pb-6">
           {!isGenerating && Object.keys(steps).length === 0 && !finalResult ? (
-            <div className="flex flex-col items-center justify-center h-64 text-zinc-700 space-y-4 border-2 border-dashed border-zinc-900 rounded-xl">
+            <div className="flex flex-col items-center justify-center h-48 text-zinc-700 space-y-4 border-2 border-dashed border-zinc-900 rounded-xl">
               <Terminal className="w-10 h-10 opacity-50" />
-              <p>Ready to deploy swarm.</p>
+              <p className="text-sm">Ready to deploy swarm.</p>
+              <p className="text-xs text-zinc-800">Select a tone and enter a topic above</p>
             </div>
           ) : (
             <>
-              {/* Active Steps - Dynamic for History */}
               {Object.keys(steps).map(key => {
                 const step = steps[key];
                 if (!step) return null;
@@ -285,15 +464,23 @@ export default function Home() {
                     <h2 className="font-bold text-emerald-400 text-sm tracking-wider flex items-center gap-2">
                       <Star className="w-4 h-4" /> FINAL OUTPUT
                     </h2>
-                    <button
-                      onClick={() => navigator.clipboard.writeText(finalResult.post)}
-                      className="text-[10px] uppercase font-bold tracking-widest text-emerald-500 hover:text-emerald-300 transition-colors"
-                    >
-                      Copy Text
-                    </button>
+                    <div className="flex items-center gap-3">
+                      <LinkedInShareButton text={finalResult.post} />
+                      <CopyButton text={finalResult.post} label="Copy Text" />
+                    </div>
                   </div>
 
                   <div className="p-6 space-y-6">
+                    {/* Word count badge */}
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] bg-zinc-800 border border-zinc-700 text-zinc-400 px-2 py-0.5 rounded-full font-mono">
+                        {finalResult.post.split(/\s+/).filter(Boolean).length} words
+                      </span>
+                      <span className="text-[10px] bg-zinc-800 border border-zinc-700 text-zinc-400 px-2 py-0.5 rounded-full font-mono capitalize">
+                        {tone} tone
+                      </span>
+                    </div>
+
                     {/* Post Content */}
                     <div className="prose prose-invert prose-p:leading-relaxed prose-li:marker:text-emerald-500 prose-sm max-w-none text-zinc-300 font-medium overflow-hidden">
                       <ReactMarkdown>
@@ -325,26 +512,6 @@ export default function Home() {
           )}
           <div ref={bottomRef} />
         </div>
-
-        {/* Input Area */}
-        <form onSubmit={handleSubmit} className="flex gap-2 pt-4 border-t border-zinc-900 bg-zinc-950 relative z-10">
-          <input
-            type="text"
-            value={topic}
-            onChange={(e) => setTopic(e.target.value)}
-            placeholder="Enter a topic needed for viral content..."
-            className="flex-1 bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-3 text-zinc-100 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition-all font-mono shadow-inner"
-            disabled={isGenerating}
-          />
-          <button
-            type="submit"
-            disabled={isGenerating || !topic.trim()}
-            className="bg-emerald-600 hover:bg-emerald-500 text-white px-6 lg:px-8 py-2 rounded-lg font-medium disabled:opacity-50 transition-colors flex items-center gap-2 shadow-lg shadow-emerald-900/20"
-          >
-            {isGenerating ? <Loader2 className="w-5 h-5 animate-spin" /> : <Play className="w-5 h-5" />}
-            <span className="hidden sm:inline">Dispatch Agents</span>
-          </button>
-        </form>
       </div>
 
       {/* Right Column: Live Logs */}
@@ -354,7 +521,10 @@ export default function Home() {
             <Terminal className="w-4 h-4" />
             <h2 className="font-mono text-xs font-bold uppercase tracking-wider">Neural Stream</h2>
           </div>
-          <span className="text-[10px] bg-zinc-900 px-2 py-1 rounded-full border border-zinc-800">
+          <span className={clsx(
+            "text-[10px] px-2 py-1 rounded-full border font-mono",
+            isGenerating ? "bg-blue-900/20 border-blue-800 text-blue-400 animate-pulse" : "bg-zinc-900 border-zinc-800 text-zinc-600"
+          )}>
             {isGenerating ? "LIVE" : "IDLE"}
           </span>
         </header>
@@ -372,6 +542,19 @@ export default function Home() {
             )}
             <div ref={logRef} />
           </div>
+
+          {/* Log count footer */}
+          {rawLogs.length > 0 && (
+            <div className="border-t border-zinc-900 px-4 py-2 flex justify-between items-center text-[9px] text-zinc-700">
+              <span>{rawLogs.length} events</span>
+              <button
+                onClick={() => setRawLogs([])}
+                className="hover:text-zinc-500 transition-colors"
+              >
+                clear
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </main>

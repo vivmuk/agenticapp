@@ -112,16 +112,17 @@ export async function researchTopicStreamQwen(topic: string, plan: string[]) {
 }
 
 // 3. Writer Agent
-export async function writeDraftStream(topic: string, plan: string[], researchData: string, previousContext?: string) {
+export async function writeDraftStream(topic: string, plan: string[], researchData: string, previousContext?: string, tone?: string) {
+    const toneInstruction = tone ? `\nTone: Write in a ${tone} voice.` : '';
     const messages: VeniceMessage[] = [
         { role: 'system', content: 'You are a Viral LinkedIn Ghostwriter and Savvy Journalist.' },
         {
             role: 'user',
             content: `Topic: "${topic}"
       Research: ${researchData}
-      ${previousContext ? `\nPREVIOUS ITERATIONS & CRITIQUES (Learn from these):\n${previousContext}` : ''}
-      
-      Write a draft. High impact. Short sentences. One big idea. 
+      ${previousContext ? `\nPREVIOUS ITERATIONS & CRITIQUES (Learn from these):\n${previousContext}` : ''}${toneInstruction}
+
+      Write a draft. High impact. Short sentences. One big idea.
       Quality: Savvy journalist / Best social media writer.
       Constraint: Do NOT use em-dashes (—). Use hyphens or commas instead.`
         }
@@ -221,25 +222,57 @@ export async function finalizePostStream(draft: string, suggestions: string[]) {
 
 // 6. Visualizer Agent (Generates Image)
 
-// Helper to generate the prompt first
-async function generateImagePrompt(postContent: string) {
+// Helper to generate a concise summary of the post for image context
+export async function summarizePost(postContent: string): Promise<string> {
+    const messages: VeniceMessage[] = [
+        { role: 'system', content: 'You are a concise content summarizer.' },
+        {
+            role: 'user',
+            content: `Summarize the following LinkedIn post in 2-3 sentences, capturing the core theme, main insight, and key visual concepts that could be depicted in an illustration.
+
+Post:
+${postContent.substring(0, 2000)}
+
+Return ONLY the summary text, no labels or preamble.`
+        }
+    ];
+
+    const request: VeniceChatRequest = {
+        model: 'qwen3-4b',
+        messages,
+        stream: false,
+        venice_parameters: { include_venice_system_prompt: false, strip_thinking_response: true }
+    };
+
+    const response = await veniceChatCompletion(request);
+    return await getFullResponseText(response);
+}
+
+// Helper to generate the image prompt using summary + post content
+async function generateImagePrompt(postContent: string, summary: string) {
     const promptParams: VeniceChatRequest = {
-        model: 'grok-41-fast', // Intelligent model for prompt engineering
+        model: 'grok-41-fast',
         messages: [
             { role: 'system', content: 'You are an Expert Art Director specializing in Whimsical Watercolor Art.' },
             {
-                role: 'user', content: `Base on the following post content:
-            "${postContent.substring(0, 1000)}..."
-            
-            Create a "Whimsical Watercolor style" image prompt using this EXACT structure:
-            
-            **WORK SURFACE:** A soft, textured watercolor paper background.
-            **LAYOUT:** Flowing, organic composition. Dreamy and whimsical atmosphere.
-            **COMPONENTS:** [Extract 3-4 key visual elements from the post and depict them in a soft, hand-painted watercolor style]
-            **STYLE:** Whimsical watercolor, soft pastels, bleeding edges, gentle strokes, artistic, dreamy.
-            **CONSTRAINTS:** NO TEXT, NO WRITING, NO LETTERS, NO SIGNATURES on the image.
-            
-            Constraint: Return ONLY the prompt text. Max 1500 characters.` }
+                role: 'user', content: `You are creating an illustration for a LinkedIn post. Use the summary and post content below to craft a vivid, on-theme image prompt.
+
+SUMMARY:
+${summary}
+
+POST CONTENT (for additional context):
+"${postContent.substring(0, 800)}..."
+
+Create a "Whimsical Watercolor style" image prompt using this EXACT structure:
+
+WORK SURFACE: A soft, textured watercolor paper background.
+LAYOUT: Flowing, organic composition. Dreamy and whimsical atmosphere.
+SUBJECT: [Derive the central subject directly from the SUMMARY above - make it specific and thematically relevant]
+COMPONENTS: [Extract 3-4 key visual elements from the summary and post, depicted in soft, hand-painted watercolor style]
+STYLE: Whimsical watercolor, soft pastels, bleeding edges, gentle strokes, artistic, dreamy.
+CONSTRAINTS: NO TEXT, NO WRITING, NO LETTERS, NO SIGNATURES on the image.
+
+Constraint: Return ONLY the prompt text. Max 1500 characters.` }
         ],
         stream: false
     };
@@ -248,9 +281,9 @@ async function generateImagePrompt(postContent: string) {
     return await getFullResponseText(promptRes);
 }
 
-export async function generateImage(postContent: string) {
-    // Step 1: Generate specialized retro prompt
-    let imagePrompt = await generateImagePrompt(postContent);
+export async function generateImage(postContent: string, summary: string) {
+    // Step 1: Generate specialized image prompt using summary + post content
+    let imagePrompt = await generateImagePrompt(postContent, summary);
 
     // Enforce strict limit for Venice API
     if (imagePrompt.length > 1500) {
@@ -260,20 +293,20 @@ export async function generateImage(postContent: string) {
     // Remove markdown bolding if present to clean up prompt
     imagePrompt = imagePrompt.replace(/\*\*/g, '');
 
-    // Step 2: Generate Image with Qwen
+    // Step 2: Generate Image with seedream-v4
     const imageRequest = {
-        model: 'z-image-turbo',
+        model: 'seedream-v4',
         prompt: imagePrompt,
         negative_prompt: "dark, gritty, dystopian, text, words, letters, signature, watermark, logo, caption, writing, typography, speech bubble, label, title, messy, cluttered, decay",
         width: 1024,
         height: 1024,
         hide_watermark: true,
-        steps: 8,
+        steps: 20,
         cfg_scale: 7
     };
 
     try {
-        const result = await veniceImageGenerate(imageRequest, 45000);
+        const result = await veniceImageGenerate(imageRequest, 60000);
 
         if (result.images && Array.isArray(result.images)) {
             return `data:image/png;base64,${result.images[0]}`;
