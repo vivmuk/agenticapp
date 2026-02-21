@@ -433,10 +433,10 @@ async function generateImagePrompt(postContent: string, summary: string): Promis
     const request: VeniceChatRequest = {
         model: 'grok-41-fast',
         messages: [
-            { role: 'system', content: 'You are an Expert Art Director specializing in Whimsical Watercolor Art.' },
+            { role: 'system', content: 'You are an Expert Infographic Designer and Art Director. You create stunning visual infographics that combine data, icons, and bold artistic illustration.' },
             {
                 role: 'user',
-                content: `Create an illustration prompt for a LinkedIn post. Use the summary and post content below.
+                content: `Create an infographic image prompt for a LinkedIn post. Use the summary and post content below.
 
 SUMMARY:
 ${summary}
@@ -444,14 +444,16 @@ ${summary}
 POST CONTENT (additional context):
 "${postContent.substring(0, 800)}..."
 
-Create a "Whimsical Watercolor style" image prompt using this EXACT structure:
+Create a bold, modern infographic prompt using this EXACT structure:
 
-WORK SURFACE: A soft, textured watercolor paper background.
-LAYOUT: Flowing, organic composition. Dreamy and whimsical atmosphere.
-SUBJECT: [Derive the central subject directly from the SUMMARY - specific and thematically relevant]
-COMPONENTS: [Extract 3-4 key visual elements from the summary, in soft hand-painted watercolor style]
-STYLE: Whimsical watercolor, soft pastels, bleeding edges, gentle strokes, artistic, dreamy.
-CONSTRAINTS: NO TEXT, NO WRITING, NO LETTERS, NO SIGNATURES on the image.
+STYLE: Clean editorial infographic. Bold geometric shapes, flat design with depth. Rich, saturated accent colors on a light or dark background. Professional and visually striking.
+LAYOUT: Structured grid layout. Central hero illustration surrounded by supporting visual elements — charts, icons, progress bars, or data callouts arranged symmetrically.
+HERO VISUAL: [One large central artistic illustration directly representing the core theme from the SUMMARY — rendered in a bold, graphic art style]
+DATA ELEMENTS: [2-3 visual callouts: simple bar chart, circular progress ring, or icon + large number — derived from any statistics or key points in the post]
+ICONS: [3-4 flat vector-style icons that represent the key concepts from the summary]
+COLOR PALETTE: [Choose a 2-3 color palette that fits the topic's mood — e.g. deep navy + electric teal + white for tech, warm amber + charcoal for business, etc.]
+TYPOGRAPHY AREAS: Bold headline placeholder at top, small caption areas near data elements. Clean sans-serif hierarchy.
+MOOD: Confident, authoritative, insightful. Designed to stop the scroll on LinkedIn.
 
 Return ONLY the prompt text. Max 1500 characters.`
             }
@@ -463,7 +465,7 @@ Return ONLY the prompt text. Max 1500 characters.`
     return await getFullResponseText(res);
 }
 
-// 7c. Image Generator (seedream-v4)
+// 7c. Image Generator (recraft-v4)
 export async function generateImage(postContent: string, summary: string): Promise<string | null> {
     let imagePrompt = await generateImagePrompt(postContent, summary);
     if (imagePrompt.length > 1500) imagePrompt = imagePrompt.substring(0, 1500);
@@ -471,9 +473,9 @@ export async function generateImage(postContent: string, summary: string): Promi
 
     try {
         const result = await veniceImageGenerate({
-            model: 'seedream-v4',
+            model: 'recraft-v4',
             prompt: imagePrompt,
-            negative_prompt: "dark, gritty, dystopian, text, words, letters, signature, watermark, logo, caption, writing, typography, speech bubble, label, title, messy, cluttered, decay",
+            negative_prompt: "blurry, low quality, watermark, signature, amateur, cluttered, chaotic, poorly designed, stock photo, generic, boring, monochrome, washed out",
             width: 1024,
             height: 1024,
             hide_watermark: true,
